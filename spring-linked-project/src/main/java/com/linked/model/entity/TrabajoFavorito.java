@@ -1,0 +1,29 @@
+package com.linked.model.entity;
+
+import com.core.model.entity.BaseEntity;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Entity
+@Table(name = "tat_trabajo_favorito",
+       uniqueConstraints = @UniqueConstraint(
+           name = "tat_trabajo_favorito_unique",
+           columnNames = {"id_cliente", "id_trabajo"}))
+@Getter
+@Setter
+@NoArgsConstructor
+public class TrabajoFavorito extends BaseEntity {
+
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "id_cliente", nullable = false)
+    private SweUsrapl cliente;
+
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "id_trabajo", nullable = false)
+    private Trabajo trabajo;
+}

@@ -1,0 +1,44 @@
+package com.linked.model.entity;
+
+import com.core.model.entity.BaseEntity;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.time.LocalTime;
+
+@Entity
+@Table(name = "tat_horario_habitual",
+       uniqueConstraints = @UniqueConstraint(
+           name = "tat_horario_habitual_unique",
+           columnNames = {"id_tatuador", "dia_semana"}))
+@Getter
+@Setter
+@NoArgsConstructor
+public class HorarioHabitual extends BaseEntity {
+
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "id_tatuador", nullable = false)
+    private SweUsrapl tatuador;
+
+    @Min(0)
+    @Max(6)
+    @Column(name = "dia_semana", nullable = false, columnDefinition = "SMALLINT")
+    private int diaSemana;
+
+    @NotNull
+    @Column(name = "hora_inicio", nullable = false)
+    private LocalTime horaInicio;
+
+    @NotNull
+    @Column(name = "hora_fin", nullable = false)
+    private LocalTime horaFin;
+
+    @Column(name = "duracion_turno_min", nullable = false)
+    private int duracionTurnoMin;
+}

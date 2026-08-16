@@ -1,0 +1,72 @@
+package com.linked.service.impl;
+
+import com.linked.dto.SweItemmenuDto;
+import com.linked.exception.AppExceptions;
+import com.linked.mapper.SweItemmenuMapper;
+import com.linked.model.entity.SweItemmenu;
+import com.linked.repository.SweItemmenuRepository;
+import com.linked.service.SweItemmenuService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class SweItemmenuServiceImpl implements SweItemmenuService {
+
+    private final SweItemmenuRepository itemmenuRepository;
+    private final SweItemmenuMapper itemmenuMapper;
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<SweItemmenuDto.Response> findAll() {
+        return itemmenuMapper.toResponseList(
+                itemmenuRepository.findByParentItemIsNullAndStatusOrderByOrderNumberAsc("true"));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public SweItemmenuDto.Response findById(Long id) {
+        return itemmenuMapper.toResponse(getActiveOrThrow(id));
+    }
+
+    @Override
+    @Transactional
+    public SweItemmenuDto.Response create(SweItemmenuDto.CreateRequest request) {
+        SweItemmenu entity = itemmenuMapper.toEntity(request);
+        if (request.idSupitemmenu() != null) {
+            entity.setParentItem(itemmenuRepository.getReferenceById(request.idSupitemmenu()));
+        }
+        return itemmenuMapper.toResponse(itemmenuRepository.save(entity));
+    }
+
+    @Override
+    @Transactional
+    public SweItemmenuDto.Response update(Long id, SweItemmenuDto.UpdateRequest request) {
+        SweItemmenu entity = getActiveOrThrow(id);
+        itemmenuMapper.updateEntity(request, entity);
+        if (request.idSupitemmenu() != null) {
+            entity.setParentItem(itemmenuRepository.getReferenceById(request.idSupitemmenu()));
+        }
+        return itemmenuMapper.toResponse(itemmenuRepository.save(entity));
+    }
+
+    @Override
+    @Transactional
+    public void delete(Long id) {
+        SweItemmenu entity = getActiveOrThrow(id);
+        entity.disable();
+        itemmenuRepository.save(entity);
+    }
+
+    private SweItemmenu getActiveOrThrow(Long id) {
+        SweItemmenu m = itemmenuRepository.findById(id)
+                .orElseThrow(() -> new AppExceptions.ResourceNotFoundException("Item de menú no encontrado: " + id));
+        if (!m.isActive()) {
+            throw new AppExceptions.ResourceNotFoundException("Item de menú no encontrado: " + id);
+        }
+        return m;
+    }
+}

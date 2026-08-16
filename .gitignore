@@ -40,3 +40,10 @@ src/shared/pg-database/.env
 
 ##Build
 *.tsbuildinfo
+
+# Clave RSA de dev del backend Spring - cada entorno genera/inyecta la suya
+**/rsa-keypair.ser
+
+# Maven (spring-linked-project/)
+target/
+*.class
