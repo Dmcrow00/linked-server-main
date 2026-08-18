@@ -154,6 +154,13 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- ==================== DOTENV (carga .env local, no se versiona) ==================== -->
+        <dependency>
+            <groupId>me.paulschwarz</groupId>
+            <artifactId>spring-dotenv</artifactId>
+            <version>4.0.0</version>
+        </dependency>
+
         <!-- ==================== DMC00-CORE (librería local) ==================== -->
         <dependency>
             <groupId>com.core</groupId>

@@ -1,0 +1,51 @@
+# ============================================================
+#  PERFIL: DESARROLLO (dev)
+#  Activar con: -Dspring.profiles.active=dev
+# ============================================================
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/linked-main-db
+    username: postgres
+    password: ${DATABASE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+      connection-timeout: 20000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+
+  mail:
+    host: localhost
+    port: 1025        # MailHog o Mailtrap para desarrollo
+    username:
+    password:
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+
+  devtools:
+    restart:
+      enabled: true
+    livereload:
+      enabled: true
+
+app:
+  rsa:
+    plaintext-fallback: true
+    key-path: rsa-keypair.ser
+
+logging:
+  level:
+    root: INFO
+    com.linked: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

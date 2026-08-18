@@ -7,6 +7,10 @@ coverage
 .env.example
 CLAUDE.md
 
+# Excepcion: el .env.example de spring-linked-project es una plantilla sin
+# valores reales - documenta que variables hacen falta en el .env local
+!spring-linked-project/.env.example
+
 #env variables file 
 *.env
 
