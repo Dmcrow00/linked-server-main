@@ -10,6 +10,12 @@ spring:
     database-platform: org.hibernate.dialect.H2Dialect
   flyway:
     enabled: false
+  # EmailServiceImpl pide un JavaMailSender por constructor, y el autoconfig solo
+  # lo crea si hay host. Sin esto el contexto de test no levanta. No se manda nada:
+  # ningun test ejercita el envio.
+  mail:
+    host: localhost
+    port: 3025
 
 app:
   jwt:
