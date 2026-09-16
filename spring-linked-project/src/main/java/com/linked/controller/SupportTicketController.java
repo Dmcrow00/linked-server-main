@@ -17,6 +17,10 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Tickets de soporte. Cualquiera puede crear uno, incluso sin sesión; la gestión queda para
+ * administradores y moderadores.
+ */
 @RestController
 @RequestMapping("/api/supportTicket")
 @RequiredArgsConstructor

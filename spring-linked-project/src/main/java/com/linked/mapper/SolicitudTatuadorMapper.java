@@ -6,6 +6,7 @@ import org.mapstruct.*;
 
 import java.util.List;
 
+/** Convierte solicitudes de tatuador a DTO; {@code status} expone el estado del trámite, no la baja lógica. */
 @Mapper(componentModel = "spring",
         uses = {SweUsrMapper.class},
         nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)

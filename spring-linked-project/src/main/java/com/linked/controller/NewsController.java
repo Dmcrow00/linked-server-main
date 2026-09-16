@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/** Feed público de noticias sobre tatuajes. */
 @RestController
 @RequestMapping("/api/news")
 @RequiredArgsConstructor

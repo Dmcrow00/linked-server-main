@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+/** Implementación de {@link TrabajosService}. */
 @Service
 @RequiredArgsConstructor
 public class TrabajosServiceImpl implements TrabajosService {

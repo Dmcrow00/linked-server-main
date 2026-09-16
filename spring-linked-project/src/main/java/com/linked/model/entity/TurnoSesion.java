@@ -11,6 +11,12 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Turno (sesión de tatuaje) solicitado por un cliente.
+ * <p>
+ * Tabla {@code tat_turno_sesion}. Los tatuadores se vinculan mediante {@link TurnoTatuador};
+ * hoy cada turno se crea con un único tatuador, pero el modelo admite varios.
+ */
 @Entity
 @Table(name = "tat_turno_sesion")
 @Getter
@@ -22,6 +28,7 @@ public class TurnoSesion extends BaseEntity {
     @JoinColumn(name = "id_cliente")
     private SweUsrapl cliente;
 
+    /** Estado del turno; toma los valores de {@link com.linked.model.enums.EstadoTurno}. */
     @Column(name = "estado", nullable = false, length = 20)
     private String estado = "Pendiente";
 

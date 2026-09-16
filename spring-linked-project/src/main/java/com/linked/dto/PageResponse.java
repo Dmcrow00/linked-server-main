@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 
 import java.util.List;
 
+/** Resultado paginado con los datos de paginación que necesita el cliente para navegar. */
 @Getter
 @Setter
 @NoArgsConstructor

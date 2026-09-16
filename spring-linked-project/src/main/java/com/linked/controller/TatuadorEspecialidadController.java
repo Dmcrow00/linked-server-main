@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/** Especialidades asignadas a cada tatuador. */
 @RestController
 @RequestMapping("/api/tatuador")
 @RequiredArgsConstructor
@@ -24,7 +25,7 @@ public class TatuadorEspecialidadController {
     @Operation(summary = "Obtener especialidades de un tatuador")
     public ResponseEntity<ApiResponse<List<EspecialidadDto.Response>>> getEspecialidades(
             @PathVariable Long userId) {
-        // Delegated to findById which includes especialidades in response
+        // Las especialidades ya vienen incluidas en el perfil del usuario.
         return ResponseEntity.ok(ApiResponse.ok(
                 userService.findById(userId).especialidades()));
     }

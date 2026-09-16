@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/** Implementación de {@link InstagramService} sobre la API Graph de Instagram. */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -32,6 +33,9 @@ public class InstagramServiceImpl implements InstagramService {
 
     private static final String GRAPH_BASE = "https://graph.instagram.com";
     private static final String OAUTH_BASE  = "https://api.instagram.com/oauth";
+
+    /** Vigencia estándar de un token de larga duración (60 días), si la API no la informa. */
+    private static final long EXPIRACION_POR_DEFECTO_SEG = 5183944L;
 
     private final InstagramTokenRepository tokenRepository;
     private final SweUsrRepository sweUsrRepository;
@@ -71,7 +75,7 @@ public class InstagramServiceImpl implements InstagramService {
     public void handleCallback(String code, String state) {
         Long tatuadorId = Long.parseLong(state);
 
-        // Exchange code for short-lived token
+        // 1. Código de autorización → token de corta duración
         Map<?, ?> shortToken = webClientBuilder.build()
                 .post()
                 .uri(OAUTH_BASE + "/access_token")
@@ -91,7 +95,7 @@ public class InstagramServiceImpl implements InstagramService {
 
         String shortAccessToken = (String) shortToken.get("access_token");
 
-        // Exchange for long-lived token
+        // 2. Token de corta duración → token de larga duración
         Map<?, ?> longToken = webClientBuilder.build()
                 .get()
                 .uri(GRAPH_BASE + "/access_token" +
@@ -108,9 +112,9 @@ public class InstagramServiceImpl implements InstagramService {
 
         String accessToken = (String) longToken.get("access_token");
         Object expiresInRaw = longToken.get("expires_in");
-        long expiresIn = expiresInRaw instanceof Number n ? n.longValue() : 5183944L;
+        long expiresIn = expiresInRaw instanceof Number n ? n.longValue() : EXPIRACION_POR_DEFECTO_SEG;
 
-        // Get Instagram user ID
+        // 3. ID de la cuenta de Instagram
         Map<?, ?> userInfo = webClientBuilder.build()
                 .get()
                 .uri(GRAPH_BASE + "/me?fields=id&access_token=" + accessToken)
@@ -166,7 +170,7 @@ public class InstagramServiceImpl implements InstagramService {
                 trabajo.setInstagramMediaId(mediaId);
                 trabajo.setDescripcion(caption);
 
-                // Download and upload to Cloudinary
+                // La imagen se copia a Cloudinary porque las URLs de Instagram vencen.
                 if (mediaUrl != null) {
                     try {
                         byte[] imageBytes = webClientBuilder.build()
@@ -215,7 +219,7 @@ public class InstagramServiceImpl implements InstagramService {
         tokenRepository.deleteByTatuador_Id(tatuadorId);
     }
 
-    // Refresh tokens expiring in less than 7 days — runs at 3am daily
+    /** Todos los días a las 3:00 renueva los tokens que vencen en menos de 7 días. */
     @Scheduled(cron = "0 0 3 * * *")
     @Transactional
     @SuppressWarnings("unchecked")
@@ -236,7 +240,7 @@ public class InstagramServiceImpl implements InstagramService {
 
                 if (refreshed != null && refreshed.containsKey("access_token")) {
                     Object expiresInRaw = refreshed.get("expires_in");
-                    long expiresIn = expiresInRaw instanceof Number n ? n.longValue() : 5183944L;
+                    long expiresIn = expiresInRaw instanceof Number n ? n.longValue() : EXPIRACION_POR_DEFECTO_SEG;
                     token.setAccessToken((String) refreshed.get("access_token"));
                     token.setTokenExpiresAt(LocalDateTime.now().plusSeconds(expiresIn));
                     tokenRepository.save(token);
@@ -248,5 +252,4 @@ public class InstagramServiceImpl implements InstagramService {
             }
         }
     }
-
 }

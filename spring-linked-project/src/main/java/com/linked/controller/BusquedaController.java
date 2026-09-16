@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+/** Búsqueda pública de tatuadores por ubicación y, a futuro, por estilo a partir de una imagen. */
 @RestController
 @RequestMapping("/api/busqueda")
 @RequiredArgsConstructor

@@ -12,6 +12,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+/** Convierte usuarios a DTO con sus roles vigentes y especialidades; las fechas van en {@code yyyy-MM-dd}. */
 @Mapper(componentModel = "spring",
         nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface SweUsrMapper {

@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/** Administración del menú de navegación. La baja de un ítem es lógica. */
 @Service
 @RequiredArgsConstructor
 public class SweItemmenuServiceImpl implements SweItemmenuService {
@@ -19,6 +20,7 @@ public class SweItemmenuServiceImpl implements SweItemmenuService {
     private final SweItemmenuRepository itemmenuRepository;
     private final SweItemmenuMapper itemmenuMapper;
 
+    /** Devuelve solo los ítems activos de primer nivel, ordenados. */
     @Override
     @Transactional(readOnly = true)
     public List<SweItemmenuDto.Response> findAll() {

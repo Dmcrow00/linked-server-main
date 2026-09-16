@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.Optional;
 
+/** Acceso a solicitudes para ser tatuador ({@link SolicitudTatuador}). */
 public interface SolicitudTatuadorRepository extends JpaRepository<SolicitudTatuador, Long> {
 
     List<SolicitudTatuador> findAllByOrderByCreationTimestampDesc();

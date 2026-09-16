@@ -5,6 +5,13 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
+/**
+ * Formato común de todas las respuestas JSON de la API.
+ * <p>
+ * Éxito: {@code {"success": true, "message": "...", "data": ...}}.<br>
+ * Error: {@code {"success": false, "message": "...", "errors": {...}}}, donde {@code errors}
+ * solo aparece en errores de validación. Los campos nulos no se serializan.
+ */
 @Getter
 @Setter
 @NoArgsConstructor

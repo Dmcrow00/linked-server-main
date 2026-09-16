@@ -11,15 +11,22 @@ import javax.crypto.spec.OAEPParameterSpec;
 import javax.crypto.spec.PSource;
 import java.util.Base64;
 
+/**
+ * Descifra las contraseñas que el cliente web envía cifradas con la clave pública RSA
+ * (ver {@link com.linked.config.RsaKeyConfig}).
+ * <p>
+ * Con {@code app.rsa.plaintext-fallback=true} (solo en desarrollo) un valor que no se puede
+ * descifrar se toma como texto plano, lo que permite probar la API desde Swagger o Postman.
+ */
 @Service
 public class RsaDecryptionService {
 
     private final PrivateKey rsaPrivateKey;
     private final boolean plaintextFallback;
 
-    // Web Crypto RSA-OAEP with SHA-256 uses SHA-256 for both digest and MGF1.
-    // Java's "OAEPWithSHA-256AndMGF1Padding" shorthand uses SHA-1 for MGF1 by default,
-    // so we must specify the parameters explicitly.
+    // Web Crypto (RSA-OAEP con SHA-256) usa SHA-256 tanto para el digest como para MGF1.
+    // El alias "OAEPWithSHA-256AndMGF1Padding" de Java usa SHA-1 en MGF1, por eso los
+    // parámetros se declaran de forma explícita.
     private static final OAEPParameterSpec OAEP_SHA256 = new OAEPParameterSpec(
             "SHA-256", "MGF1", new MGF1ParameterSpec("SHA-256"), PSource.PSpecified.DEFAULT);
 
@@ -29,6 +36,11 @@ public class RsaDecryptionService {
         this.plaintextFallback = plaintextFallback;
     }
 
+    /**
+     * @param input texto cifrado en Base64
+     * @return el texto descifrado
+     * @throws AppExceptions.BadRequestException si no se puede descifrar y el fallback está deshabilitado
+     */
     public String decrypt(String input) {
         try {
             Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPPadding");

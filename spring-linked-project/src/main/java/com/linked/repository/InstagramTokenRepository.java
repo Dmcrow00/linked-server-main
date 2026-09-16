@@ -9,12 +9,14 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+/** Acceso a tokens de Instagram ({@link InstagramToken}). */
 public interface InstagramTokenRepository extends JpaRepository<InstagramToken, Long> {
 
     Optional<InstagramToken> findByTatuador_Id(Long tatuadorId);
 
     void deleteByTatuador_Id(Long tatuadorId);
 
+    /** Tokens que vencen antes de la fecha indicada; los usa la renovación programada. */
     @Query("SELECT t FROM InstagramToken t WHERE t.tokenExpiresAt < :threshold")
     List<InstagramToken> findExpiringBefore(@Param("threshold") LocalDateTime threshold);
 }

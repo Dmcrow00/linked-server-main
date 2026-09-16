@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
+/** Acceso a las asignaciones usuario-rol ({@link SweUsrrolapl}). */
 public interface SweUsrRolRepository extends JpaRepository<SweUsrrolapl, Long> {
 
     List<SweUsrrolapl> findByUsrapl_Id(Long usraplId);

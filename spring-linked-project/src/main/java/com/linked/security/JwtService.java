@@ -16,6 +16,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+/**
+ * Emisión y validación de los JWT de sesión.
+ * <p>
+ * Los tokens se firman con HMAC usando {@code app.jwt.secret} (codificado en Base64) y llevan
+ * el username como subject. La vigencia se define en {@code app.jwt.expiration} (milisegundos).
+ */
 @Slf4j
 @Service
 public class JwtService {
@@ -40,10 +46,12 @@ public class JwtService {
                 .compact();
     }
 
+    /** Devuelve el username del token. Lanza {@link JwtException} si la firma no es válida. */
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
+    /** Indica si el token tiene firma válida, no está vencido y pertenece al usuario dado. */
     public boolean isTokenValid(String token, UserDetails userDetails) {
         try {
             final String username = extractUsername(token);

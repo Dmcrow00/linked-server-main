@@ -8,14 +8,20 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 
+/**
+ * Vinculación de la cuenta de Instagram de un tatuador y sincronización de sus posts.
+ * El callback es público porque lo invoca Instagram al terminar la autorización.
+ */
 @RestController
 @RequestMapping("/api/instagram")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('Tatuador')")
 @Tag(name = "Instagram", description = "Integración OAuth con Instagram")
 public class InstagramController {
 
@@ -29,6 +35,7 @@ public class InstagramController {
     }
 
     @GetMapping("/callback")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Callback OAuth de Instagram (público)")
     public ResponseEntity<Void> callback(
             @RequestParam String code,

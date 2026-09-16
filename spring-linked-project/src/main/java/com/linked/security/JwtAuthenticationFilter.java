@@ -17,6 +17,12 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+/**
+ * Autentica cada request a partir del header {@code Authorization: Bearer <jwt>}.
+ * <p>
+ * Si el token falta o no es válido, la request continúa sin autenticar y es
+ * {@code SecurityConfig} quien decide si el endpoint lo exige (respondiendo 401).
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor

@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.util.List;
 
+/** Administración del menú de navegación (solo Administrador). */
 @RestController
 @RequestMapping("/api/swe/menu")
 @RequiredArgsConstructor

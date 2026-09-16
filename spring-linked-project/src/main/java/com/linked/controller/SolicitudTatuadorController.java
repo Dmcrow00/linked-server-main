@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+/** Revisión de solicitudes para ser tatuador (solo Administrador). */
 @RestController
 @RequestMapping("/api/solicitudes-tatuador")
 @RequiredArgsConstructor

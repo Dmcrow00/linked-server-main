@@ -14,6 +14,7 @@ import java.security.PublicKey;
 import java.util.Base64;
 import java.util.Map;
 
+/** Endpoints públicos de autenticación. */
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -23,6 +24,7 @@ public class AuthController {
     private final AuthService authService;
     private final PublicKey rsaPublicKey;
 
+    /** Clave pública en formato PEM con la que el cliente web cifra las contraseñas. */
     @GetMapping("/public-key")
     @Operation(summary = "Obtener clave pública RSA para cifrado de datos sensibles")
     public ResponseEntity<Map<String, String>> getPublicKey() {

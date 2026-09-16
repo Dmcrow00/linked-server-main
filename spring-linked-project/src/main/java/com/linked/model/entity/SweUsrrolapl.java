@@ -6,6 +6,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Asignación de un rol a un usuario.
+ * <p>
+ * Tabla {@code swe_usrrolapl}. El rol se carga en forma inmediata (EAGER) porque
+ * {@link SweUsrapl#getAuthorities()} necesita su descripción en cada request autenticado.
+ */
 @Entity
 @Table(name = "swe_usrrolapl",
        uniqueConstraints = @UniqueConstraint(

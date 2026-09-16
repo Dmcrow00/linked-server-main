@@ -6,6 +6,10 @@ import org.mapstruct.*;
 
 import java.util.List;
 
+/**
+ * Conversión entre ítems de menú y sus DTOs. El ítem padre no se mapea: lo resuelve el
+ * servicio a partir de {@code idSupitemmenu}.
+ */
 @Mapper(componentModel = "spring",
         nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface SweItemmenuMapper {
@@ -24,6 +28,7 @@ public interface SweItemmenuMapper {
     @Mapping(target = "modificationTimestamp", ignore = true)
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "children", ignore = true)
+    @Mapping(target = "parentItem", ignore = true)
     SweItemmenu toEntity(SweItemmenuDto.CreateRequest req);
 
     @Mapping(target = "id", ignore = true)
@@ -34,5 +39,6 @@ public interface SweItemmenuMapper {
     @Mapping(target = "modificationTimestamp", ignore = true)
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "children", ignore = true)
+    @Mapping(target = "parentItem", ignore = true)
     void updateEntity(SweItemmenuDto.UpdateRequest req, @MappingTarget SweItemmenu entity);
 }

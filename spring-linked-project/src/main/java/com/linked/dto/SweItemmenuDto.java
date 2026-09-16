@@ -3,6 +3,11 @@ package com.linked.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+/**
+ * Contratos de administración del menú de navegación ({@code /api/swe/menu}).
+ * En todos los casos {@code rolesPermitidos} es una lista de roles separados por coma;
+ * vacío significa visible para todos.
+ */
 public class SweItemmenuDto {
 
     public record CreateRequest(

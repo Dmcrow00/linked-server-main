@@ -11,6 +11,12 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.Map;
 
+/**
+ * Subida y borrado de imágenes en Cloudinary.
+ * <p>
+ * Las imágenes se guardan bajo la carpeta {@code linked/<folder>} y se devuelve la URL segura
+ * (https), que es lo que se persiste en base de datos.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -18,6 +24,7 @@ public class CloudinaryServiceImpl {
 
     private final Cloudinary cloudinary;
 
+    /** @return URL https de la imagen subida */
     @SuppressWarnings("unchecked")
     public String uploadImage(MultipartFile file, String folder) {
         try {
@@ -35,6 +42,7 @@ public class CloudinaryServiceImpl {
         }
     }
 
+    /** Igual que {@link #uploadImage} pero a partir de bytes ya descargados (por ejemplo, desde Instagram). */
     @SuppressWarnings("unchecked")
     public String uploadBytes(byte[] bytes, String folder) {
         try {
@@ -52,6 +60,7 @@ public class CloudinaryServiceImpl {
         }
     }
 
+    /** Borra una imagen por su {@code public_id}; si falla solo se registra en el log. */
     public void deleteImage(String publicId) {
         try {
             cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());

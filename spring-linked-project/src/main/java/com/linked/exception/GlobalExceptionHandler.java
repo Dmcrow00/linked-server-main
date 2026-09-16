@@ -5,18 +5,29 @@ import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
+import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Convierte las excepciones en respuestas {@code ApiResponse} con el código HTTP adecuado.
+ * <p>
+ * Las excepciones no contempladas se registran completas en el log y devuelven un 500
+ * genérico, sin exponer detalles internos al cliente.
+ */
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -85,6 +96,27 @@ public class GlobalExceptionHandler {
         Map<String, String> errors = new HashMap<>();
         ex.getConstraintViolations().forEach(v -> errors.put(v.getPropertyPath().toString(), v.getMessage()));
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error("Error de validacion", errors));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleUnreadableBody(HttpMessageNotReadableException ex) {
+        log.warn("Cuerpo de la solicitud invalido: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error("El cuerpo de la solicitud falta o tiene un formato invalido"));
+    }
+
+    // Parámetros o archivos faltantes y valores mal formados son errores de quien llama (400),
+    // no del servidor; el mensaje indica qué dato corregir.
+    @ExceptionHandler({
+            MissingServletRequestParameterException.class,
+            MissingServletRequestPartException.class,
+            MethodArgumentTypeMismatchException.class,
+            DateTimeParseException.class
+    })
+    public ResponseEntity<ApiResponse<Void>> handleInvalidRequest(Exception ex) {
+        log.warn("Solicitud invalida: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error("Solicitud invalida: " + ex.getMessage()));
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)

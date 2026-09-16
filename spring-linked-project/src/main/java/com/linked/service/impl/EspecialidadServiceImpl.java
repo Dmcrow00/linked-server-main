@@ -12,6 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * ABM de especialidades. El nombre es único sin distinguir mayúsculas y la baja es lógica.
+ */
 @Service
 @RequiredArgsConstructor
 public class EspecialidadServiceImpl implements EspecialidadService {
@@ -62,6 +65,7 @@ public class EspecialidadServiceImpl implements EspecialidadService {
         especialidadRepository.save(entity);
     }
 
+    /** Las especialidades dadas de baja se tratan como inexistentes. */
     private Especialidad getActiveOrThrow(Long id) {
         Especialidad e = especialidadRepository.findById(id)
                 .orElseThrow(() -> new AppExceptions.ResourceNotFoundException("Especialidad no encontrada: " + id));

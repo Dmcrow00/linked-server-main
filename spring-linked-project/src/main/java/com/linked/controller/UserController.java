@@ -22,6 +22,7 @@ import com.linked.exception.AppExceptions;
 import java.net.URI;
 import java.util.List;
 
+/** Registro, perfil y administración de usuarios y sus roles. */
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor

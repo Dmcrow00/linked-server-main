@@ -10,6 +10,7 @@ import lombok.Setter;
 
 import java.io.Serializable;
 
+/** Clave compuesta de {@link TurnoTatuador}: (id_tatuador, id_turno_sesion). */
 @Embeddable
 @Getter
 @Setter

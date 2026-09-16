@@ -12,6 +12,10 @@ import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
 
+/**
+ * Documentación OpenAPI de la API, navegable en {@code /swagger-ui.html}.
+ * En el perfil {@code prod} está deshabilitada (ver {@code application-prod.yml}).
+ */
 @Configuration
 public class OpenApiConfig {
 

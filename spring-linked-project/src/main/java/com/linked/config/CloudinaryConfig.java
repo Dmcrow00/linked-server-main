@@ -6,6 +6,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Cliente de Cloudinary, donde se almacenan las imágenes que se suben a la plataforma
+ * (fotos de trabajos, referencias de turnos y fotos de perfil).
+ */
 @Configuration
 public class CloudinaryConfig {
 

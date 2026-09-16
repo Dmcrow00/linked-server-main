@@ -12,6 +12,12 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
+/**
+ * Envío de emails transaccionales con plantillas Thymeleaf ({@code templates/email}).
+ * <p>
+ * Los envíos son asíncronos: si falla el servidor de correo se registra en el log, pero no
+ * se interrumpe la operación que originó el email.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -26,12 +32,14 @@ public class EmailServiceImpl {
     @Value("${app.frontend.base-url:http://localhost:4200}")
     private String frontendBaseUrl;
 
+    /** Envía el enlace de recuperación, que apunta a la pantalla {@code /reset-password} del cliente web. */
     @Async
     public void sendPasswordResetEmail(String toEmail, String username, String resetToken) {
         try {
             Context ctx = new Context();
             ctx.setVariable("username", username);
             ctx.setVariable("resetUrl", frontendBaseUrl + "/reset-password?token=" + resetToken);
+            // Debe coincidir con el vencimiento que fija UserServiceImpl#forgotPassword.
             ctx.setVariable("expirationHours", 1);
 
             String html = templateEngine.process("email/password-reset", ctx);

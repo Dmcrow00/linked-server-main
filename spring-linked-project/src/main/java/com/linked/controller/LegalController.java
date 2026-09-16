@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
+/** Páginas legales públicas, en HTML generado con Thymeleaf ({@code templates/legal}). */
 @RestController
 @RequestMapping("/api/legal")
 @RequiredArgsConstructor

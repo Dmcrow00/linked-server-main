@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 
+/** Revisión, por parte de un administrador, de las solicitudes para ser tatuador. */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -33,6 +34,10 @@ public class SolicitudTatuadorServiceImpl implements SolicitudTatuadorService {
         return solicitudMapper.toResponseList(solicitudRepository.findAllByOrderByCreationTimestampDesc());
     }
 
+    /**
+     * Aprueba la solicitud: reemplaza el rol Cliente por Tatuador y asigna las especialidades
+     * elegidas en el registro. Solo se pueden procesar solicitudes pendientes.
+     */
     @Override
     @Transactional
     public void aprobar(Long id, String adminUsername) {
@@ -62,10 +67,9 @@ public class SolicitudTatuadorServiceImpl implements SolicitudTatuadorService {
         nuevoRol.setRolapl(rolTatuador);
         sweUsrRolRepository.save(nuevoRol);
 
-        // Asignar especialidades del JSON si existen
+        // Asignar especialidades guardadas como arreglo JSON, ej. "[1, 2, 3]"
         if (solicitud.getEspecialidadesIds() != null && !solicitud.getEspecialidadesIds().isBlank()) {
             try {
-                // Parse simple de "[1,2,3]"
                 String raw = solicitud.getEspecialidadesIds().replaceAll("[\\[\\]\\s]", "");
                 if (!raw.isEmpty()) {
                     List<Long> ids = new ArrayList<>();
@@ -82,6 +86,7 @@ public class SolicitudTatuadorServiceImpl implements SolicitudTatuadorService {
         }
     }
 
+    /** Rechaza la solicitud dejando registro del administrador y del motivo. */
     @Override
     @Transactional
     public void rechazar(Long id, String adminUsername, String notas) {

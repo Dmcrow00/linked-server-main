@@ -11,6 +11,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Noticias sobre tatuajes para la home del cliente web.
+ * <p>
+ * Usa NewsAPI cuando hay {@code app.news.api-key} configurada. Si no hay clave o la llamada
+ * falla, recurre a los posts más votados de la semana en Reddit r/tattoos.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -61,6 +67,7 @@ public class NewsServiceImpl {
         }
     }
 
+    /** Posts destacados de la semana en Reddit r/tattoos; devuelve lista vacía si también falla. */
     @SuppressWarnings("unchecked")
     private List<NewsArticleDto> getFallbackNews() {
         try {
