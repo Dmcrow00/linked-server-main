@@ -9,6 +9,10 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.Map;
 
+/**
+ * Validación de tokens de Google reCAPTCHA.
+ * Se activa con {@code app.recaptcha.enabled}, que está habilitado en el perfil {@code prod}.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -24,6 +28,7 @@ public class RecaptchaServiceImpl {
     @Value("${app.recaptcha.enabled:false}")
     private boolean enabled;
 
+    /** No hace nada si reCAPTCHA está deshabilitado; si está habilitado exige un token válido. */
     public void verifyIfEnabled(String token) {
         if (!enabled) return;
         if (token == null || token.isBlank()) {

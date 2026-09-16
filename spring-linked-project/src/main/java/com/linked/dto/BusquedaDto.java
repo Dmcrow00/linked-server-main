@@ -2,6 +2,7 @@ package com.linked.dto;
 
 import java.util.List;
 
+/** Contratos de búsqueda de tatuadores ({@code /api/busqueda}). */
 public class BusquedaDto {
 
     public record TatuadorUbicacion(

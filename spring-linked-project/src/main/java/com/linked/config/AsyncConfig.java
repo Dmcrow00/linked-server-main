@@ -6,6 +6,10 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.concurrent.Executor;
 
+/**
+ * Pool de hilos para los métodos {@code @Async} (envío de emails y sincronización con
+ * Instagram al iniciar sesión), de modo que no demoren la respuesta HTTP.
+ */
 @Configuration
 public class AsyncConfig {
 

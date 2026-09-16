@@ -28,6 +28,13 @@ import org.springframework.web.cors.CorsConfigurationSource;
 
 import java.nio.charset.StandardCharsets;
 
+/**
+ * Seguridad HTTP de la API: autenticación sin estado con JWT y reglas de acceso por URL.
+ * <p>
+ * Acá se definen los endpoints públicos y las reglas generales; los permisos por rol de cada
+ * operación están en los controllers con {@code @PreAuthorize}. Los errores 401 y 403 se
+ * devuelven con el mismo formato {@code ApiResponse} que el resto de la API.
+ */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -41,6 +48,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+            // Sin sesión ni cookies: el JWT viaja en el header, por lo que CSRF no aplica.
             .csrf(AbstractHttpConfigurer::disable)
             .cors(cors -> cors.configurationSource(corsConfigurationSource))
             .sessionManagement(session ->
@@ -61,9 +69,11 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/trabajos/feed").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/news/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/especialidades/**").permitAll()
-                // ── Búsqueda pública ──────────────────────────────────────────────
+                // ── Búsqueda pública ──────────────────────────────────────────
                 .requestMatchers(HttpMethod.GET,  "/api/busqueda/tatuadores-ubicacion").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/busqueda/por-estilo").permitAll()
+                // ── Soporte: se puede reportar un problema sin iniciar sesión ──
+                .requestMatchers(HttpMethod.POST, "/api/supportTicket/create").permitAll()
                 // ── Solo Administrador ────────────────────────────────────────
                 .requestMatchers("/api/swe/**").hasRole("Administrador")
                 .requestMatchers("/api/solicitudes-tatuador/**").hasRole("Administrador")
@@ -105,6 +115,8 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder(10);
     }
 
+    // Se escribe a mano porque estos errores ocurren en la cadena de filtros, antes de llegar
+    // a los controllers y, por lo tanto, fuera del alcance de GlobalExceptionHandler.
     private void writeJsonError(HttpServletResponse response, int status, String message) {
         try {
             response.setStatus(status);

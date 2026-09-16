@@ -8,6 +8,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Estilo de tatuaje (Realismo, Blackwork, Lettering, etc.).
+ * <p>
+ * Tabla {@code tat_especialidad}. Se asocia a los tatuadores mediante la tabla intermedia
+ * {@code tat_tatuador_especialidad} (ver {@link SweUsrapl#getEspecialidades()}).
+ * La baja es lógica: {@code status = "false"}.
+ */
 @Entity
 @Table(name = "tat_especialidad",
        uniqueConstraints = @UniqueConstraint(name = "tat_especialidad_nombre_key", columnNames = "nombre"))

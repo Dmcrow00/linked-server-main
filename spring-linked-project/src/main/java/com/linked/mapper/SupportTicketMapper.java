@@ -6,6 +6,7 @@ import org.mapstruct.*;
 
 import java.util.List;
 
+/** Convierte tickets a DTO; {@code status} indica si el ticket está abierto ({@code ticketOpen}). */
 @Mapper(componentModel = "spring",
         nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface SupportTicketMapper {

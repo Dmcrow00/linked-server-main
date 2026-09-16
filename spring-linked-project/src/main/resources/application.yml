@@ -16,6 +16,9 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        # Carga en lote las relaciones diferidas (imágenes, mensajes, roles) al armar
+        # listados, en lugar de hacer una consulta por cada entidad.
+        default_batch_fetch_size: 50
         jdbc:
           time_zone: America/Argentina/Buenos_Aires
 

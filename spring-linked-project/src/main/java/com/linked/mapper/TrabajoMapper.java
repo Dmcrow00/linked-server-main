@@ -6,6 +6,10 @@ import org.mapstruct.*;
 
 import java.util.List;
 
+/**
+ * Convierte trabajos a DTO. {@code likedByMe} sale siempre en {@code false}: lo completa
+ * {@code TrabajosServiceImpl} según el usuario autenticado.
+ */
 @Mapper(componentModel = "spring",
         uses = {SweUsrMapper.class},
         nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)

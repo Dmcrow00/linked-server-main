@@ -51,3 +51,9 @@ src/shared/pg-database/.env
 # Maven (spring-linked-project/)
 target/
 *.class
+
+# Eclipse / Spring Tools (spring-linked-project/)
+.classpath
+.project
+.factorypath
+.settings/

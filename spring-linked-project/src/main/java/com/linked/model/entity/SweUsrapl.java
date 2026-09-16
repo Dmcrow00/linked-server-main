@@ -21,11 +21,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Perfil de usuario de la aplicacion.
- * Tabla: swe_usrapl
- *
- * Implementa UserDetails de Spring Security.
- * Login soportado: por username O por email.
+ * Perfil de usuario de la aplicación; es también el principal de Spring Security.
+ * <p>
+ * Tabla {@code swe_usrapl}. El login acepta username o email. Las credenciales están en
+ * {@link SweUsrauth} y los roles en {@link SweUsrrolapl}. La baja es lógica: se completa
+ * {@code deleteDate} y {@code status} pasa a {@code "false"}.
  */
 @Entity
 @Table(name = "swe_usrapl",
@@ -63,9 +63,11 @@ public class SweUsrapl extends SweAuditableEntity implements UserDetails {
     @Column(name = "birth_date", nullable = false)
     private LocalDate birthDate;
 
+    /** URL de la foto de perfil. */
     @Column(name = "profile_photo")
     private String profilePhoto;
 
+    /** Nombre del estudio donde trabaja el tatuador. */
     @Size(max = 100)
     @Column(name = "estudio", length = 100)
     private String estudio;
@@ -80,6 +82,7 @@ public class SweUsrapl extends SweAuditableEntity implements UserDetails {
     @Column(name = "localidad", length = 255)
     private String localidad;
 
+    /** Coordenadas del estudio o domicilio; se usan en la búsqueda de tatuadores por mapa. */
     @Column(name = "lat")
     private Double lat;
 
@@ -100,7 +103,7 @@ public class SweUsrapl extends SweAuditableEntity implements UserDetails {
                cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SweUsrrolapl> userRoles = new ArrayList<>();
 
-    // ─── Relacion M:N con especialidades (tat_tatuador_especialidad) ──────────
+    // ─── Relación M:N con especialidades (tat_tatuador_especialidad) ─────────
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
@@ -120,6 +123,12 @@ public class SweUsrapl extends SweAuditableEntity implements UserDetails {
         return usrauth != null ? usrauth.getPassword() : null;
     }
 
+    /**
+     * Roles vigentes con el prefijo {@code ROLE_} que espera {@code hasRole(...)}.
+     * <p>
+     * {@code userRoles} es diferida: quien cargue el usuario para autenticar debe traer los
+     * roles en la misma consulta (ver {@code SweUsrRepository#findByUsernameForAuth}).
+     */
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         if (userRoles == null) return List.of();
@@ -133,6 +142,7 @@ public class SweUsrapl extends SweAuditableEntity implements UserDetails {
     @Override public boolean isAccountNonLocked()      { return true; }
     @Override public boolean isCredentialsNonExpired() { return true; }
 
+    /** Un usuario dado de baja no puede iniciar sesión. */
     @Override
     public boolean isEnabled() {
         return "true".equals(getStatus()) && deleteDate == null;
@@ -146,6 +156,7 @@ public class SweUsrapl extends SweAuditableEntity implements UserDetails {
         return username;
     }
 
+    /** Indica si el usuario tiene el rol vigente, sin distinguir mayúsculas. */
     public boolean hasRole(String rolDescription) {
         if (userRoles == null) return false;
         return userRoles.stream()

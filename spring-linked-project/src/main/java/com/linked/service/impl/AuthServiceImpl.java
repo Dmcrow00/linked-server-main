@@ -11,7 +11,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+/** Implementación de {@link AuthService}. */
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
@@ -23,7 +25,9 @@ public class AuthServiceImpl implements AuthService {
     private final RecaptchaServiceImpl recaptchaService;
     private final InstagramServiceImpl instagramService;
 
+    // Transaccional para poder consultar los roles del usuario, que se cargan de forma diferida.
     @Override
+    @Transactional(readOnly = true)
     public AuthDto.TokenResponse login(AuthDto.LoginRequest request) {
         recaptchaService.verifyIfEnabled(request.recaptchaToken());
 
@@ -41,7 +45,6 @@ public class AuthServiceImpl implements AuthService {
 
         String token = jwtService.generateToken(user);
 
-        // Async Instagram sync for tatuadores
         if (user.hasRole("Tatuador")) {
             instagramService.syncAsync(user.getId());
         }

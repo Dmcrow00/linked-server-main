@@ -7,6 +7,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * "Me gusta" de un cliente sobre un trabajo.
+ * <p>
+ * Tabla {@code tat_trabajo_favorito}. La restricción única (cliente, trabajo) impide
+ * marcar dos veces el mismo trabajo.
+ */
 @Entity
 @Table(name = "tat_trabajo_favorito",
        uniqueConstraints = @UniqueConstraint(

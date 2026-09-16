@@ -10,6 +10,14 @@ import java.security.*;
 import java.security.spec.*;
 import java.util.Base64;
 
+/**
+ * Par de claves RSA con el que el cliente web cifra las contraseñas antes de enviarlas.
+ * <p>
+ * La clave pública se publica en {@code GET /api/auth/public-key} y la privada la usa
+ * {@link com.linked.security.RsaDecryptionService}. Si el archivo {@code app.rsa.key-path}
+ * no existe se genera un par nuevo; en cada entorno conviene conservarlo entre reinicios
+ * para que la clave pública que ya descargó el cliente siga siendo válida.
+ */
 @Configuration
 public class RsaKeyConfig {
 

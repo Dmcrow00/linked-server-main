@@ -30,6 +30,13 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Implementación de {@link UserService}.
+ * <p>
+ * Al crear entidades se usa siempre la instancia que devuelve {@code save()}: BaseEntity
+ * inicializa {@code version} en 0, Spring Data las trata como existentes y hace {@code merge},
+ * que devuelve una copia administrada distinta de la original.
+ */
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -96,14 +103,15 @@ public class UserServiceImpl implements UserService {
         if (request.lng() != null) user.setLng(request.lng());
         user = sweUsrRepository.save(user);
 
+        // Queda como Cliente hasta que un administrador apruebe la solicitud.
         createAuth(user, request.password());
         assignRole(user, "Cliente");
 
-        // Crear solicitud de tatuador con las especialidades solicitadas
         SolicitudTatuador solicitud = new SolicitudTatuador();
         solicitud.setUser(user);
         solicitud.setEstudio(request.estudio());
         if (request.especialidadesIds() != null && !request.especialidadesIds().isEmpty()) {
+            // List.toString() produce "[1, 2]", que es un arreglo JSON válido.
             solicitud.setEspecialidadesIds(request.especialidadesIds().toString());
         }
         solicitudRepository.save(solicitud);
@@ -141,6 +149,9 @@ public class UserServiceImpl implements UserService {
     public void updateRoles(Long id, UserDto.UpdateRolesRequest request) {
         getActiveOrThrow(id);
         sweUsrRolRepository.deleteByUsrapl_Id(id);
+        // Hibernate ejecuta los INSERT antes que los DELETE pendientes: sin este flush, conservar
+        // un rol que el usuario ya tenía viola la restricción única (usuario, rol).
+        sweUsrRolRepository.flush();
 
         SweUsrapl userRef = sweUsrRepository.getReferenceById(id);
         for (Long roleId : request.roleIds()) {
@@ -174,6 +185,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void forgotPassword(UserDto.ForgotPasswordRequest request) {
+        // Si el email no existe no se informa nada, para no revelar qué cuentas están registradas.
         sweUsrRepository.findByEmail(request.email()).ifPresent(user -> {
             SweUsrauth auth = sweUsrauthRepository.findByUsrapl_Id(user.getId())
                     .orElseThrow(() -> new AppExceptions.InternalException("Auth no encontrado para el usuario"));
@@ -183,7 +195,6 @@ public class UserServiceImpl implements UserService {
             sweUsrauthRepository.save(auth);
             emailService.sendPasswordResetEmail(user.getEmail(), user.getUsername(), token);
         });
-        // Always returns void (no leak of email existence)
     }
 
     @Override
@@ -214,6 +225,7 @@ public class UserServiceImpl implements UserService {
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
+    /** Los usuarios dados de baja se tratan como inexistentes. */
     private SweUsrapl getActiveOrThrow(Long id) {
         SweUsrapl u = sweUsrRepository.findById(id)
                 .orElseThrow(() -> new AppExceptions.ResourceNotFoundException("Usuario no encontrado: " + id));
@@ -244,6 +256,7 @@ public class UserServiceImpl implements UserService {
         return user;
     }
 
+    /** Descifra la contraseña recibida y guarda su hash BCrypt. */
     private void createAuth(SweUsrapl user, String encryptedPassword) {
         String plainPassword = rsaDecryptionService.decrypt(encryptedPassword);
         SweUsrauth auth = new SweUsrauth();

@@ -11,12 +11,14 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
 
+/** Disponibilidad de los tatuadores para reservar y configuración de su horario habitual. */
 @RestController
 @RequestMapping("/api/agenda")
 @RequiredArgsConstructor
@@ -44,6 +46,7 @@ public class AgendaController {
     }
 
     @GetMapping("/horario-habitual")
+    @PreAuthorize("hasRole('Tatuador')")
     @Operation(summary = "Ver mi horario habitual (tatuador)")
     public ResponseEntity<ApiResponse<List<HorarioHabitualDto.Response>>> getHorarioHabitual(
             @AuthenticationPrincipal SweUsrapl currentUser) {
@@ -52,6 +55,7 @@ public class AgendaController {
     }
 
     @PutMapping("/horario-habitual")
+    @PreAuthorize("hasRole('Tatuador')")
     @Operation(summary = "Guardar horario habitual (tatuador)")
     public ResponseEntity<ApiResponse<Void>> saveHorarioHabitual(
             @AuthenticationPrincipal SweUsrapl currentUser,

@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
+/** Acceso a permisos por rol ({@link SweAccmodapl}). */
 public interface SweAccmodaplRepository extends JpaRepository<SweAccmodapl, Long> {
 
     List<SweAccmodapl> findByRolapl_IdAndStatus(Long rolId, String status);

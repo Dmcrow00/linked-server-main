@@ -11,6 +11,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Permiso de un rol sobre un recurso puntual de un módulo (endpoint, función o botón).
+ * <p>
+ * Tabla {@code swe_accmodapl}, parte del esquema común SWE. La autorización de la API
+ * se resuelve hoy por rol en {@code SecurityConfig} y en las anotaciones
+ * {@code @PreAuthorize} de los controllers.
+ */
 @Entity
 @Table(name = "swe_accmodapl",
        uniqueConstraints = @UniqueConstraint(

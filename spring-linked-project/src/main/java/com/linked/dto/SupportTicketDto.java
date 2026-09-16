@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Size;
 
 import java.util.List;
 
+/** Contratos de tickets de soporte ({@code /api/supportTicket}). */
 public class SupportTicketDto {
 
     public record CreateRequest(
@@ -18,6 +19,11 @@ public class SupportTicketDto {
             @Email @Size(max = 254) String contactEmail
     ) {}
 
+    /**
+     * Actualización parcial: los campos {@code null} no se modifican.
+     *
+     * @param status {@code true} para dejar el ticket abierto, {@code false} para cerrarlo
+     */
     public record UpdateRequest(
             Boolean status,
             @Size(max = 50) String category,
@@ -25,6 +31,10 @@ public class SupportTicketDto {
             String adminResponse
     ) {}
 
+    /**
+     * @param status   {@code true} si el ticket está abierto
+     * @param usuarios usernames vinculados al ticket
+     */
     public record Response(
             Long id,
             boolean status,

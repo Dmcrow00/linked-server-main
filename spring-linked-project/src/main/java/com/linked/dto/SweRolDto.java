@@ -3,6 +3,7 @@ package com.linked.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+/** Contratos de roles de usuario. */
 public class SweRolDto {
 
     public record CreateRequest(

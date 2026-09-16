@@ -3,6 +3,12 @@ package com.linked.exception;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
+/**
+ * Excepciones de negocio de la aplicación.
+ * <p>
+ * {@link GlobalExceptionHandler} las traduce al código HTTP correspondiente con cuerpo
+ * {@code ApiResponse}, así que alcanza con lanzarlas desde un servicio para cortar la operación.
+ */
 public class AppExceptions {
 
     private AppExceptions() {}

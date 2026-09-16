@@ -9,6 +9,13 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Optional;
 
+/**
+ * Completa automáticamente {@code creationUser} y {@code modificationUser} de las entidades.
+ * <p>
+ * Usa el username autenticado, o {@code "SYSTEM"} cuando la operación no tiene sesión
+ * (registro, tareas programadas). Se trunca a 25 caracteres porque ese es el largo de
+ * las columnas de auditoría.
+ */
 @Configuration
 @EnableJpaAuditing(auditorAwareRef = "auditorProvider")
 public class JpaAuditingConfig {

@@ -9,6 +9,10 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
+/**
+ * Orígenes autorizados a consumir la API desde el navegador.
+ * Se configuran con {@code app.cors.allowed-origins} (lista separada por comas).
+ */
 @Configuration
 public class CorsConfig {
 

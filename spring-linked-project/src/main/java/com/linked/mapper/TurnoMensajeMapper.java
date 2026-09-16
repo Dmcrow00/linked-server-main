@@ -6,6 +6,7 @@ import org.mapstruct.*;
 
 import java.util.List;
 
+/** Convierte mensajes de turno a DTO, exponiendo solo el id y el username del autor. */
 @Mapper(componentModel = "spring",
         nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface TurnoMensajeMapper {
