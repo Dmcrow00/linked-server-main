@@ -3,11 +3,13 @@ package com.linked.service.impl;
 import com.linked.dto.InstagramStatusDto;
 import com.linked.exception.AppExceptions;
 import com.linked.model.entity.InstagramToken;
+import com.linked.model.entity.SweUsrapl;
 import com.linked.model.entity.Trabajo;
 import com.linked.model.entity.TrabajoFoto;
 import com.linked.repository.InstagramTokenRepository;
 import com.linked.repository.SweUsrRepository;
 import com.linked.repository.TrabajoRepository;
+import com.linked.security.JwtService;
 import com.linked.service.InstagramService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +44,7 @@ public class InstagramServiceImpl implements InstagramService {
     private final TrabajoRepository trabajoRepository;
     private final CloudinaryServiceImpl cloudinaryService;
     private final WebClient.Builder webClientBuilder;
+    private final JwtService jwtService;
 
     @Value("${app.instagram.app-id:}")
     private String appId;
@@ -65,7 +68,7 @@ public class InstagramServiceImpl implements InstagramService {
                 .queryParam("redirect_uri", redirectUri)
                 .queryParam("scope", "instagram_basic,instagram_content_publish")
                 .queryParam("response_type", "code")
-                .queryParam("state", tatuadorId.toString())
+                .queryParam("state", jwtService.generateOAuthState(tatuadorId))
                 .toUriString();
     }
 
@@ -73,7 +76,11 @@ public class InstagramServiceImpl implements InstagramService {
     @Transactional
     @SuppressWarnings("unchecked")
     public void handleCallback(String code, String state) {
-        Long tatuadorId = Long.parseLong(state);
+        Long tatuadorId = jwtService.extractOAuthStateUserId(state);
+        if (tatuadorId == null) {
+            throw new AppExceptions.BadRequestException(
+                    "El enlace de autorización venció o no es válido. Volvé a intentar la vinculación.");
+        }
 
         // 1. Código de autorización → token de corta duración
         Map<?, ?> shortToken = webClientBuilder.build()
@@ -114,23 +121,59 @@ public class InstagramServiceImpl implements InstagramService {
         Object expiresInRaw = longToken.get("expires_in");
         long expiresIn = expiresInRaw instanceof Number n ? n.longValue() : EXPIRACION_POR_DEFECTO_SEG;
 
-        // 3. ID de la cuenta de Instagram
+        // 3. Datos de la cuenta de Instagram
         Map<?, ?> userInfo = webClientBuilder.build()
                 .get()
-                .uri(GRAPH_BASE + "/me?fields=id&access_token=" + accessToken)
+                .uri(GRAPH_BASE + "/me?fields=id,username,profile_picture_url&access_token=" + accessToken)
                 .retrieve()
                 .bodyToMono(Map.class)
                 .block();
 
         String instagramUserId = userInfo != null ? (String) userInfo.get("id") : "";
 
+        SweUsrapl tatuador = sweUsrRepository.findById(tatuadorId)
+                .orElseThrow(() -> new AppExceptions.ResourceNotFoundException(
+                        "Tatuador no encontrado: " + tatuadorId));
+
         InstagramToken token = tokenRepository.findByTatuador_Id(tatuadorId)
                 .orElse(new InstagramToken());
-        token.setTatuador(sweUsrRepository.getReferenceById(tatuadorId));
+        token.setTatuador(tatuador);
         token.setAccessToken(accessToken);
         token.setInstagramUserId(instagramUserId);
         token.setTokenExpiresAt(LocalDateTime.now().plusSeconds(expiresIn));
         tokenRepository.save(token);
+
+        if (userInfo != null) {
+            sincronizarPerfil(tatuador, (String) userInfo.get("username"),
+                    (String) userInfo.get("profile_picture_url"));
+        }
+    }
+
+    /**
+     * Copia usuario y foto de Instagram al perfil del tatuador.
+     * <p>
+     * Mientras la cuenta esté vinculada, esta pasa a ser su identidad visible y el cliente
+     * bloquea la edición manual de la foto. Si la descarga falla se conserva la foto anterior:
+     * no vale la pena abortar la vinculación por la imagen.
+     */
+    private void sincronizarPerfil(SweUsrapl tatuador, String username, String pictureUrl) {
+        if (username != null && !username.isBlank()) {
+            tatuador.setInstagramHandle(username);
+        }
+        if (pictureUrl != null && !pictureUrl.isBlank()) {
+            try {
+                byte[] imageBytes = webClientBuilder.build()
+                        .get().uri(pictureUrl)
+                        .retrieve().bodyToMono(byte[].class).block();
+                if (imageBytes != null) {
+                    tatuador.setProfilePhoto(cloudinaryService.uploadBytes(imageBytes, "profile-photos"));
+                }
+            } catch (Exception e) {
+                log.warn("No se pudo copiar la foto de perfil de Instagram del tatuador {}: {}",
+                        tatuador.getId(), e.getMessage());
+            }
+        }
+        sweUsrRepository.save(tatuador);
     }
 
     @Override
@@ -209,7 +252,9 @@ public class InstagramServiceImpl implements InstagramService {
                 .map(t -> new InstagramStatusDto(
                         true,
                         t.getInstagramUserId(),
-                        t.getTokenExpiresAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)))
+                        t.getTokenExpiresAt() != null
+                                ? t.getTokenExpiresAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                                : null))
                 .orElse(new InstagramStatusDto(false, null, null));
     }
 

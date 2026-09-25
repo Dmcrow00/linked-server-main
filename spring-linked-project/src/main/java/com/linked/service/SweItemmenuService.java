@@ -7,8 +7,13 @@ import java.util.List;
 /** Administración del menú de navegación del cliente web. */
 public interface SweItemmenuService {
 
-    /** Ítems activos de primer nivel, en orden de visualización. */
-    List<SweItemmenuDto.Response> findAll();
+    /**
+     * Ítems activos visibles para los roles indicados, en orden de visualización.
+     * <p>
+     * Devuelve la lista plana (padres e hijos): el cliente arma el árbol con
+     * {@code idSupitemmenu}.
+     */
+    List<SweItemmenuDto.Response> findAllVisibles(List<Long> roleIds);
 
     SweItemmenuDto.Response findById(Long id);
 

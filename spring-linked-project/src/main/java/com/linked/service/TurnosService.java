@@ -22,8 +22,11 @@ public interface TurnosService {
     /** Cambia el estado del turno; solo puede hacerlo un tatuador asignado. */
     TurnoSesionDto.Response actualizarEstado(Long turnoId, TurnoSesionDto.GestionarRequest request, Long tatuadorId);
 
-    /** Actualización parcial de fechas, descripción o estado. */
-    TurnoSesionDto.Response update(Long turnoId, TurnoSesionDto.UpdateRequest request);
+    /**
+     * Actualización parcial de fechas, descripción o estado.
+     * Solo para el cliente que pidió el turno o un tatuador asignado.
+     */
+    TurnoSesionDto.Response update(Long turnoId, TurnoSesionDto.UpdateRequest request, Long userId);
 
     /** Mensajes del chat en orden cronológico; solo para el cliente o un tatuador del turno. */
     List<TurnoMensajeDto.Response> getMensajes(Long turnoId, Long userId);

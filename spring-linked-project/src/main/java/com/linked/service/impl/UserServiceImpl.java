@@ -53,6 +53,7 @@ public class UserServiceImpl implements UserService {
     private final RsaDecryptionService rsaDecryptionService;
     private final CloudinaryServiceImpl cloudinaryService;
     private final EmailServiceImpl emailService;
+    private final RecaptchaServiceImpl recaptchaService;
 
     @Override
     @Transactional(readOnly = true)
@@ -75,6 +76,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public AuthDto.TokenResponse register(UserDto.CreateRequest request) {
+        recaptchaService.verifyIfEnabled(request.recaptchaToken());
         validateNewUser(request.username(), request.email());
 
         SweUsrapl user = buildUser(request.username(), request.email(),
@@ -94,6 +96,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public AuthDto.TokenResponse registerTatuador(UserDto.RegisterTatuadorRequest request) {
+        recaptchaService.verifyIfEnabled(request.recaptchaToken());
         validateNewUser(request.username(), request.email());
 
         SweUsrapl user = buildUser(request.username(), request.email(),
@@ -128,6 +131,7 @@ public class UserServiceImpl implements UserService {
         if (request.surname() != null) user.setSurname(request.surname());
         if (request.birthDate() != null) user.setBirthDate(request.birthDate());
         if (request.estudio() != null) user.setEstudio(request.estudio());
+        if (request.fechaInicioActividad() != null) user.setFechaInicioActividad(request.fechaInicioActividad());
         if (request.localidad() != null) user.setLocalidad(request.localidad());
         if (request.lat() != null) user.setLat(request.lat());
         if (request.lng() != null) user.setLng(request.lng());

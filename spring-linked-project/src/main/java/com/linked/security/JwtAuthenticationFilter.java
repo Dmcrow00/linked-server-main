@@ -30,6 +30,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final String BEARER_PREFIX = "Bearer ";
 
+    /**
+     * Inicio del flujo OAuth de Instagram: es una navegación del navegador, no un fetch, así que
+     * no puede llevar el header Authorization. Solo para esa ruta se acepta el JWT por query.
+     */
+    private static final String OAUTH_START_PATH = "/api/instagram/auth";
+
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
 
@@ -40,14 +46,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
 
-        final String authHeader = request.getHeader("Authorization");
+        final String jwt = resolveToken(request);
 
-        if (authHeader == null || !authHeader.startsWith(BEARER_PREFIX)) {
+        if (jwt == null || jwt.isBlank()) {
             filterChain.doFilter(request, response);
             return;
         }
-
-        final String jwt = authHeader.substring(BEARER_PREFIX.length());
 
         try {
             final String username = jwtService.extractUsername(jwt);
@@ -67,5 +71,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    /** Toma el JWT del header y, solo para el inicio del OAuth, del parámetro {@code token}. */
+    private String resolveToken(HttpServletRequest request) {
+        final String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith(BEARER_PREFIX)) {
+            return authHeader.substring(BEARER_PREFIX.length());
+        }
+        if (request.getRequestURI().endsWith(OAUTH_START_PATH)) {
+            return request.getParameter("token");
+        }
+        return null;
     }
 }

@@ -79,8 +79,10 @@ public class TurnosController {
     @Operation(summary = "Actualizar datos de un turno")
     public ResponseEntity<ApiResponse<TurnoSesionDto.Response>> update(
             @PathVariable Long id,
+            @AuthenticationPrincipal SweUsrapl currentUser,
             @Valid @RequestBody TurnoSesionDto.UpdateRequest request) {
-        return ResponseEntity.ok(ApiResponse.ok(turnosService.update(id, request)));
+        return ResponseEntity.ok(ApiResponse.ok(
+                turnosService.update(id, request, currentUser.getId())));
     }
 
     @GetMapping("/{id}/mensajes")

@@ -32,6 +32,9 @@ public class JwtService {
     @Value("${app.jwt.expiration}")
     private long jwtExpiration;
 
+    /** El state de OAuth solo tiene que sobrevivir al ida y vuelta con el proveedor. */
+    private static final long OAUTH_STATE_EXPIRATION_MS = 10 * 60 * 1000L;
+
     public String generateToken(UserDetails userDetails) {
         return generateToken(new HashMap<>(), userDetails);
     }
@@ -68,6 +71,32 @@ public class JwtService {
 
     public long getExpiration() {
         return jwtExpiration;
+    }
+
+    /**
+     * Genera el parámetro {@code state} de un flujo OAuth, firmado y con vencimiento corto.
+     * <p>
+     * Va y vuelve por el navegador del usuario, así que no puede ser el id en texto plano:
+     * de lo contrario cualquiera podría invocar el callback y vincular su cuenta externa
+     * al perfil de otro usuario.
+     */
+    public String generateOAuthState(Long userId) {
+        return Jwts.builder()
+                .subject(userId.toString())
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + OAUTH_STATE_EXPIRATION_MS))
+                .signWith(getSignInKey())
+                .compact();
+    }
+
+    /** @return id del usuario que inició el flujo, o {@code null} si el state no es válido o venció */
+    public Long extractOAuthStateUserId(String state) {
+        try {
+            return Long.valueOf(extractAllClaims(state).getSubject());
+        } catch (JwtException | NumberFormatException ex) {
+            log.warn("State de OAuth invalido: {}", ex.getMessage());
+            return null;
+        }
     }
 
     private boolean isTokenExpired(String token) {

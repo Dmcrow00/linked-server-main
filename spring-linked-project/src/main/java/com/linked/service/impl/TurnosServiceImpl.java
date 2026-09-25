@@ -110,8 +110,9 @@ public class TurnosServiceImpl implements TurnosService {
 
     @Override
     @Transactional
-    public TurnoSesionDto.Response update(Long turnoId, TurnoSesionDto.UpdateRequest request) {
+    public TurnoSesionDto.Response update(Long turnoId, TurnoSesionDto.UpdateRequest request, Long userId) {
         TurnoSesion turno = getTurnoOrThrow(turnoId);
+        validarParticipante(turno, userId);
         if (request.fechaHoraInicio() != null) {
             turno.setFechaHoraInicio(LocalDateTime.parse(request.fechaHoraInicio(),
                     DateTimeFormatter.ISO_LOCAL_DATE_TIME));
@@ -122,6 +123,11 @@ public class TurnosServiceImpl implements TurnosService {
         }
         if (request.descripcionCliente() != null) turno.setDescripcionCliente(request.descripcionCliente());
         if (request.estado() != null) {
+            // Aceptar o rechazar el turno es potestad del tatuador; el cliente solo edita su pedido.
+            if (!turnoTatuadorRepository.existsByTatuador_IdAndTurnoSesion_Id(userId, turnoId)) {
+                throw new AppExceptions.ForbiddenException(
+                        "Solo el tatuador asignado puede cambiar el estado del turno");
+            }
             validarEstado(request.estado());
             turno.setEstado(request.estado());
         }
@@ -163,7 +169,7 @@ public class TurnosServiceImpl implements TurnosService {
         }
     }
 
-    /** Solo el cliente que pidió el turno y los tatuadores asignados pueden usar su chat. */
+    /** Solo el cliente que pidió el turno y los tatuadores asignados pueden verlo o modificarlo. */
     private void validarParticipante(TurnoSesion turno, Long userId) {
         boolean esCliente = turno.getCliente() != null && turno.getCliente().getId().equals(userId);
         boolean esTatuador = turno.getTurnoTatuadores().stream()

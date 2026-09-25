@@ -26,6 +26,18 @@ public interface SweUsrRepository extends JpaRepository<SweUsrapl, Long> {
            "WHERE r.description = 'Tatuador' AND u.status = 'true' AND ur.status = 'true'")
     List<SweUsrapl> findAllTatuadores();
 
+    /**
+     * Igual que {@link #findAllTatuadores()} pero trayendo las especialidades en la misma
+     * consulta, para poder mapearlas fuera de la transacción (búsqueda pública).
+     * Se trae un solo bag ({@code especialidades}) para no caer en MultipleBagFetchException.
+     */
+    @Query("SELECT DISTINCT u FROM SweUsrapl u " +
+           "JOIN u.userRoles ur " +
+           "JOIN ur.rolapl r " +
+           "LEFT JOIN FETCH u.especialidades " +
+           "WHERE r.description = 'Tatuador' AND u.status = 'true' AND ur.status = 'true'")
+    List<SweUsrapl> findAllTatuadoresConEspecialidades();
+
     /** Tatuadores activos que tienen asignada la especialidad indicada. */
     @Query("SELECT u FROM SweUsrapl u " +
            "JOIN u.userRoles ur " +
