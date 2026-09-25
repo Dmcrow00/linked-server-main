@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 /** Administración del menú de navegación. La baja de un ítem es lógica. */
@@ -20,12 +22,31 @@ public class SweItemmenuServiceImpl implements SweItemmenuService {
     private final SweItemmenuRepository itemmenuRepository;
     private final SweItemmenuMapper itemmenuMapper;
 
-    /** Devuelve solo los ítems activos de primer nivel, ordenados. */
     @Override
     @Transactional(readOnly = true)
-    public List<SweItemmenuDto.Response> findAll() {
-        return itemmenuMapper.toResponseList(
-                itemmenuRepository.findByParentItemIsNullAndStatusOrderByOrderNumberAsc("true"));
+    public List<SweItemmenuDto.Response> findAllVisibles(List<Long> roleIds) {
+        return itemmenuRepository.findAll().stream()
+                .filter(SweItemmenu::isActive)
+                .filter(item -> esVisiblePara(item, roleIds))
+                .sorted(Comparator.comparing(SweItemmenu::getOrderNumber,
+                        Comparator.nullsLast(Comparator.naturalOrder())))
+                .map(itemmenuMapper::toResponse)
+                .toList();
+    }
+
+    /**
+     * Un ítem sin roles declarados es visible para cualquier usuario autenticado; si los declara,
+     * alcanza con que el usuario tenga uno. Las entradas no numéricas se ignoran para que un dato
+     * mal cargado esconda el ítem en lugar de romper el menú entero.
+     */
+    private boolean esVisiblePara(SweItemmenu item, List<Long> roleIds) {
+        String permitidos = item.getRolesPermitidos();
+        if (permitidos == null || permitidos.isBlank()) return true;
+        return Arrays.stream(permitidos.split(","))
+                .map(String::trim)
+                .filter(s -> s.matches("\\d+"))
+                .map(Long::valueOf)
+                .anyMatch(roleIds::contains);
     }
 
     @Override

@@ -25,6 +25,9 @@ public interface SweUsrMapper {
 
     List<UserDto.Response> toResponseList(List<SweUsrapl> users);
 
+    /** Vista reducida para endpoints públicos; ver {@link UserDto.Publico}. */
+    UserDto.Publico toPublico(SweUsrapl u);
+
     default String formatDate(LocalDate date) {
         return date != null ? date.format(DateTimeFormatter.ISO_LOCAL_DATE) : null;
     }

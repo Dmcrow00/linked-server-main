@@ -48,6 +48,7 @@ public class UserDto {
             @Size(max = 25) String surname,
             LocalDate birthDate,
             @Size(max = 100) String estudio,
+            LocalDate fechaInicioActividad,
             @Size(max = 255) String localidad,
             Double lat,
             Double lng,
@@ -66,6 +67,19 @@ public class UserDto {
     public record ResetPasswordRequest(
             @NotBlank String token,
             @NotBlank @Size(min = 8, max = 512) String newPassword
+    ) {}
+
+    /**
+     * Vista pública de un tatuador, para respuestas que se sirven sin sesión.
+     * <p>
+     * Deliberadamente no incluye email, fecha de nacimiento, ubicación, roles ni datos de
+     * contacto: esos solo viajan en {@link Response}, que siempre requiere autenticación.
+     */
+    public record Publico(
+            Long id,
+            String username,
+            String profilePhoto,
+            String estudio
     ) {}
 
     /** Perfil de un usuario con sus roles vigentes y especialidades. Fechas en formato {@code yyyy-MM-dd}. */

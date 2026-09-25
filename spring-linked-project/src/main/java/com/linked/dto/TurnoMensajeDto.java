@@ -9,11 +9,13 @@ public class TurnoMensajeDto {
             @NotBlank String texto
     ) {}
 
+    /** @param creationTimestamp fecha de envío en ISO-8601, para ordenar y mostrar el chat */
     public record Response(
             Long id,
             String texto,
             boolean leido,
             Long usuarioEnviaId,
-            String usuarioEnviaUsername
+            String usuarioEnviaUsername,
+            String creationTimestamp
     ) {}
 }

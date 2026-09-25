@@ -74,6 +74,10 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/busqueda/por-estilo").permitAll()
                 // ── Soporte: se puede reportar un problema sin iniciar sesión ──
                 .requestMatchers(HttpMethod.POST, "/api/supportTicket/create").permitAll()
+                // ── Menú lateral ──────────────────────────────────────────────
+                // Lo consume cualquier usuario autenticado; el servicio devuelve solo los
+                // ítems habilitados para sus roles. La administración sigue siendo exclusiva.
+                .requestMatchers(HttpMethod.GET, "/api/swe/menu").authenticated()
                 // ── Solo Administrador ────────────────────────────────────────
                 .requestMatchers("/api/swe/**").hasRole("Administrador")
                 .requestMatchers("/api/solicitudes-tatuador/**").hasRole("Administrador")

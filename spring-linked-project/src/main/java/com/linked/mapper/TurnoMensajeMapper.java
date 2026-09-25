@@ -15,6 +15,8 @@ public interface TurnoMensajeMapper {
              expression = "java(m.getUsuarioEnvia() != null ? m.getUsuarioEnvia().getId() : null)")
     @Mapping(target = "usuarioEnviaUsername",
              expression = "java(m.getUsuarioEnvia() != null ? m.getUsuarioEnvia().getUsername() : null)")
+    @Mapping(target = "creationTimestamp",
+             expression = "java(m.getCreationTimestamp() != null ? m.getCreationTimestamp().format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null)")
     TurnoMensajeDto.Response toResponse(TurnoMensaje m);
 
     List<TurnoMensajeDto.Response> toResponseList(List<TurnoMensaje> list);
