@@ -63,6 +63,13 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.ok(userService.findById(id)));
     }
 
+    /** Alimenta el portfolio público: cualquiera puede consultarlo, con o sin sesión. */
+    @GetMapping("/{id}/publico")
+    @Operation(summary = "Perfil público de un tatuador (no requiere sesión)")
+    public ResponseEntity<ApiResponse<UserDto.PerfilPublico>> findPerfilPublico(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.ok(userService.findPerfilPublico(id)));
+    }
+
     @PostMapping("/register")
     @Operation(summary = "Registrar nuevo usuario (Cliente)")
     public ResponseEntity<ApiResponse<AuthDto.TokenResponse>> register(

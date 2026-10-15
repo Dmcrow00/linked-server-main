@@ -67,6 +67,11 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/users/reset-password").permitAll()
                 // ── Feed y news públicos ──────────────────────────────────────
                 .requestMatchers(HttpMethod.GET, "/api/trabajos/feed").permitAll()
+                // ── Portfolio público de un tatuador ──────────────────────────
+                // Los trabajos ya viajan con la vista pública del autor, y el perfil que
+                // alimenta la cabecera no lleva datos personales ni de contacto.
+                .requestMatchers(HttpMethod.GET, "/api/trabajos/tatuador/*").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/users/*/publico").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/news/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/especialidades/**").permitAll()
                 // ── Búsqueda pública ──────────────────────────────────────────
