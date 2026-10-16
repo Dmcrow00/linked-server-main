@@ -31,7 +31,12 @@ Opción 2.
   `SIN-CONTRASENA`, que no es un hash: ningún login lo valida. Una contraseña que ya se cambió no se toca.
 - `AdminSemillaDevRunner` (solo perfil `dev`) le pone la contraseña de `ADMIN_DEV_PASSWORD` si la cuenta
   sigue sin contraseña. Sin la variable no hace nada.
-- En producción el admin se habilita con "olvidé mi contraseña" (guía de entorno, "Admin inicial").
+- En producción el primer admin se habilita sin cargar hashes en el repo (guía de entorno, "Admin inicial").
+
+A diferencia de shop-core (266a46f), el runner solo no alcanza: la V1 que se conserva (ADR-0002) siembra en
+toda base nueva el hash de la contraseña publicada, así que sin V18 una base nueva de producción la tendría.
+V18 corre en todas las bases; el runner, solo en dev. Confirmado con la sesión que coordina la migración el
+2026-10-15.
 
 ## Consecuencias
 

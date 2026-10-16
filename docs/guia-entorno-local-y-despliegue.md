@@ -31,9 +31,28 @@ en `http://localhost:8080/swagger-ui.html`; en dev acepta contraseñas sin cifra
 
 ### Admin inicial
 
-V18 deja al usuario `admin` sembrado sin contraseña (ADR-0003). En dev, definir `ADMIN_DEV_PASSWORD` en
-`.env`: al arrancar se le asigna esa contraseña. En una base real: cambiar el email del admin por uno real
-(`UPDATE swe_usrapl SET email = '...' WHERE username = 'admin'`) y usar "olvidé mi contraseña".
+V1 siembra un usuario `admin` y V18 lo deja sin contraseña utilizable (ADR-0003): ningún login entra con
+él hasta que alguien le asigne una.
+
+- **Dev**: definir `ADMIN_DEV_PASSWORD` en `.env`. `AdminSemillaDevRunner` (solo perfil `dev`) se la asigna
+  al arrancar si la cuenta sigue sin contraseña.
+- **Primer admin en producción**, una de dos (con acceso a la base):
+  1. Con el mail configurado (`MAIL_*`): poner un email real al admin semilla y pedir "olvidé mi contraseña"
+     desde el cliente web; el enlace llega a ese email.
+     ```sql
+     UPDATE swe_usrapl SET email = 'admin@dominio-real' WHERE username = 'admin';
+     ```
+  2. Sin mail: registrarse desde el cliente web con un usuario propio y darle el rol de administrador.
+     ```sql
+     INSERT INTO swe_usrrolapl (id_usrapl, id_rolapl)
+     SELECT u.id, r.id FROM swe_usrapl u, swe_rolapl r
+     WHERE u.username = '<usuario>' AND r.description = 'Administrador';
+     ```
+  En ningún caso se carga un hash a mano en una migración: el repositorio es público.
+- **Bases existentes**: V18 neutraliza los dos hashes que sembraron las versiones de V1. Si en alguna base el
+  admin semilla tiene la contraseña publicada en el historial del repo cargada por otro medio (otro hash de la
+  misma contraseña), V18 no lo detecta: cambiarla con "olvidé mi contraseña" o desactivar la cuenta
+  (`DELETE /api/users/{id}` como administrador). Está en los pendientes del dueño del plan del workspace.
 
 ## 2. Variables de entorno
 
