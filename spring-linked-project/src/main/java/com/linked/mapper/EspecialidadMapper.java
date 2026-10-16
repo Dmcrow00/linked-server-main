@@ -6,6 +6,7 @@ import org.mapstruct.*;
 
 import java.util.List;
 
+/** Conversión entre {@link Especialidad} y sus DTOs. Auditoría, id y estado nunca se toman del request. */
 @Mapper(componentModel = "spring",
         nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface EspecialidadMapper {

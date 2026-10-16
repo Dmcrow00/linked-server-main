@@ -1,7 +1,7 @@
 package com.linked.service.impl;
 
+import com.dmc00.core.web.AppExceptions;
 import com.linked.dto.EspecialidadDto;
-import com.linked.exception.AppExceptions;
 import com.linked.mapper.EspecialidadMapper;
 import com.linked.model.entity.Especialidad;
 import com.linked.repository.EspecialidadRepository;
@@ -12,6 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * ABM de especialidades. El nombre es único sin distinguir mayúsculas y la baja es lógica.
+ */
 @Service
 @RequiredArgsConstructor
 public class EspecialidadServiceImpl implements EspecialidadService {
@@ -62,12 +65,10 @@ public class EspecialidadServiceImpl implements EspecialidadService {
         especialidadRepository.save(entity);
     }
 
+    /** Las especialidades dadas de baja se tratan como inexistentes. */
     private Especialidad getActiveOrThrow(Long id) {
-        Especialidad e = especialidadRepository.findById(id)
-                .orElseThrow(() -> new AppExceptions.ResourceNotFoundException("Especialidad no encontrada: " + id));
-        if (!e.isActive()) {
-            throw new AppExceptions.ResourceNotFoundException("Especialidad no encontrada: " + id);
-        }
-        return e;
+        return especialidadRepository.findById(id)
+                .filter(Especialidad::isActive)
+                .orElseThrow(() -> new AppExceptions.ResourceNotFoundException("Especialidad", "id", id));
     }
 }

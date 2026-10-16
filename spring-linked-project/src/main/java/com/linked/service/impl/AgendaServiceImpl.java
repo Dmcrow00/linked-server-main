@@ -1,13 +1,12 @@
 package com.linked.service.impl;
 
+import com.dmc00.core.swe.repository.SweUsrRepository;
 import com.linked.dto.HorarioHabitualDto;
 import com.linked.dto.SlotDto;
-import com.linked.exception.AppExceptions;
 import com.linked.mapper.HorarioHabitualMapper;
 import com.linked.model.entity.HorarioHabitual;
 import com.linked.model.entity.TurnoTatuador;
 import com.linked.repository.HorarioHabitualRepository;
-import com.linked.repository.SweUsrRepository;
 import com.linked.repository.TurnoTatuadorRepository;
 import com.linked.service.AgendaService;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/** Implementación de {@link AgendaService}. */
 @Service
 @RequiredArgsConstructor
 public class AgendaServiceImpl implements AgendaService {
@@ -35,8 +35,8 @@ public class AgendaServiceImpl implements AgendaService {
     @Override
     @Transactional(readOnly = true)
     public SlotDto getSlotsDisponibles(Long tatuadorId, LocalDate fecha) {
-        // dia_semana en DB usa convención JS: Sunday=0, Monday=1..Saturday=6
-        // Java DayOfWeek: Monday=1..Sunday=7  →  JS: getDayOfWeek().getValue() % 7
+        // dia_semana usa la convención de JavaScript (domingo = 0 … sábado = 6) y
+        // DayOfWeek de Java va de lunes = 1 a domingo = 7: el módulo 7 los hace coincidir.
         int diaSemanaJs = fecha.getDayOfWeek().getValue() % 7;
 
         HorarioHabitual horario = horarioRepository
@@ -50,7 +50,6 @@ public class AgendaServiceImpl implements AgendaService {
         LocalDateTime inicio = fecha.atTime(horario.getHoraInicio());
         LocalDateTime fin = fecha.atTime(horario.getHoraFin());
 
-        // Obtener turnos reservados en el rango
         List<TurnoTatuador> reservados = turnoTatuadorRepository
                 .findReservadosEnRango(tatuadorId, inicio, fin);
 
@@ -60,7 +59,8 @@ public class AgendaServiceImpl implements AgendaService {
             ocupados.add(tt.getTurnoSesion().getFechaHoraInicio().format(fmt));
         }
 
-        // Generar slots disponibles
+        // Se recorre la franja en pasos de la duración del turno; el último turno debe
+        // terminar dentro del horario de atención.
         List<String> slots = new ArrayList<>();
         LocalTime cursor = horario.getHoraInicio();
         LocalTime limite = horario.getHoraFin();
@@ -103,8 +103,10 @@ public class AgendaServiceImpl implements AgendaService {
     @Override
     @Transactional
     public void saveHorarioHabitual(Long tatuadorId, HorarioHabitualDto.SaveRequest request) {
-        // Replace completo: eliminar existentes y recrear
         horarioRepository.deleteByTatuador_Id(tatuadorId);
+        // Hibernate ejecuta los INSERT antes que los DELETE pendientes: sin este flush, volver a
+        // guardar un día ya existente viola la restricción única (tatuador, dia_semana).
+        horarioRepository.flush();
 
         for (HorarioHabitualDto.DiaHorario dh : request.horarios()) {
             HorarioHabitual h = new HorarioHabitual();

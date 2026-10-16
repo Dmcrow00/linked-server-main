@@ -1,6 +1,7 @@
 package com.linked.model.entity;
 
-import com.core.model.entity.BaseEntity;
+import com.dmc00.core.data.BaseEntity;
+import com.dmc00.core.swe.model.entity.SweUsrapl;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -11,6 +12,13 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
+/**
+ * Token de acceso a la API de Instagram de un tatuador que vinculó su cuenta.
+ * <p>
+ * Tabla {@code tat_instagram_token}, uno por tatuador. Se guarda el token de larga duración
+ * (unos 60 días) y una tarea programada lo renueva antes de que venza
+ * (ver {@code InstagramServiceImpl#refreshExpiringTokens}).
+ */
 @Entity
 @Table(name = "tat_instagram_token",
        uniqueConstraints = @UniqueConstraint(

@@ -1,12 +1,12 @@
 package com.linked.service.impl;
 
+import com.dmc00.core.swe.model.entity.SweUsrapl;
+import com.dmc00.core.swe.repository.SweUsrRepository;
+import com.dmc00.core.web.AppExceptions;
 import com.linked.dto.SupportTicketDto;
-import com.linked.exception.AppExceptions;
 import com.linked.mapper.SupportTicketMapper;
 import com.linked.model.entity.SupportTicket;
-import com.linked.model.entity.SweUsrapl;
 import com.linked.repository.SupportTicketRepository;
-import com.linked.repository.SweUsrRepository;
 import com.linked.service.SupportTicketService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/** Gestión de tickets de soporte: alta por usuarios y seguimiento por administradores y moderadores. */
 @Service
 @RequiredArgsConstructor
 public class SupportTicketServiceImpl implements SupportTicketService {
@@ -40,6 +41,7 @@ public class SupportTicketServiceImpl implements SupportTicketService {
         return ticketMapper.toResponse(getOrThrow(id));
     }
 
+    /** @param username usuario autenticado, o {@code null} si el ticket se crea sin sesión */
     @Override
     @Transactional
     public SupportTicketDto.Response create(SupportTicketDto.CreateRequest request, String username) {
@@ -52,7 +54,9 @@ public class SupportTicketServiceImpl implements SupportTicketService {
         ticket.setScreenshot(request.screenshot());
         ticket.setContactEmail(request.contactEmail());
 
-        sweUsrRepository.findByUsername(username).ifPresent(u -> ticket.getUsuarios().add(u));
+        if (username != null) {
+            sweUsrRepository.findByUsername(username).ifPresent(u -> ticket.getUsuarios().add(u));
+        }
 
         return ticketMapper.toResponse(ticketRepository.save(ticket));
     }
@@ -68,15 +72,17 @@ public class SupportTicketServiceImpl implements SupportTicketService {
         return ticketMapper.toResponse(ticketRepository.save(ticket));
     }
 
+    /** Registra la respuesta del administrador y cierra el ticket. */
     @Override
     @Transactional
     public void respond(Long id, String adminResponse) {
         SupportTicket ticket = getOrThrow(id);
         ticket.setAdminResponse(adminResponse);
-        ticket.setTicketOpen(false);  // cerrado al responder
+        ticket.setTicketOpen(false);
         ticketRepository.save(ticket);
     }
 
+    /** Borrado físico: a diferencia del resto de las entidades, los tickets no usan baja lógica. */
     @Override
     @Transactional
     public void delete(Long id) {
@@ -85,6 +91,6 @@ public class SupportTicketServiceImpl implements SupportTicketService {
 
     private SupportTicket getOrThrow(Long id) {
         return ticketRepository.findById(id)
-                .orElseThrow(() -> new AppExceptions.ResourceNotFoundException("Ticket no encontrado: " + id));
+                .orElseThrow(() -> new AppExceptions.ResourceNotFoundException("Ticket", "id", id));
     }
 }

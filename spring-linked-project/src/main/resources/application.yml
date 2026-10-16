@@ -1,28 +1,39 @@
 # ============================================================
-#  CONFIGURACION PRINCIPAL - LINKED API
-#  Propiedades compartidas entre perfiles.
-#  Sobreescribir especificas en application-dev.yml / application-prod.yml
+#  LINKED API - configuración común a todos los perfiles
+#  Perfiles: dev (local), prod (producción). Los tests usan el perfil test.
+#  Ningún valor de producción vive acá: los secretos llegan por variables de entorno.
 # ============================================================
 
 spring:
   application:
     name: linked-api
 
-  profiles:
-    active: dev
-
   jpa:
     open-in-view: false
+    hibernate:
+      ddl-auto: validate
     properties:
       hibernate:
-        format_sql: true
+        # Carga en lote las relaciones diferidas (imágenes, mensajes, roles) al armar
+        # listados, en lugar de hacer una consulta por cada entidad.
+        default_batch_fetch_size: 50
         jdbc:
           time_zone: America/Argentina/Buenos_Aires
 
   flyway:
-    enabled: true
-    baseline-on-migrate: true
+    # Solo la carpeta de linked: db/migration/swe es de core-swe y tiene su propio historial.
     locations: classpath:db/migration/linked
+    # Las bases que vienen del backend Node ya tenían las tablas: se toman como V1.
+    baseline-on-migrate: true
+
+  # Hilos de @Async (mails y sincronizaciones de Instagram en segundo plano).
+  task:
+    execution:
+      thread-name-prefix: linked-async-
+      pool:
+        core-size: 2
+        max-size: 5
+        queue-capacity: 100
 
   servlet:
     multipart:
@@ -32,8 +43,6 @@ spring:
 
 server:
   port: 8080
-  servlet:
-    context-path: /
 
 management:
   endpoints:
@@ -43,6 +52,10 @@ management:
   endpoint:
     health:
       show-details: when-authorized
+  # El mail no es crítico: si el SMTP no responde, la app igual atiende (y Fly no la reinicia).
+  health:
+    mail:
+      enabled: false
 
 springdoc:
   api-docs:
@@ -51,17 +64,26 @@ springdoc:
     path: /swagger-ui.html
     operations-sorter: method
 
-# ── Propiedades custom de la aplicacion ──
 app:
   cors:
-    allowed-origins: http://localhost:4200,http://localhost:3000
+    allowed-origins: ${CORS_ORIGINS:http://localhost:4200,http://localhost:3000}
 
   jwt:
-    secret: dGhpcyBpcyBhIHNhbXBsZSBzZWNyZXQga2V5IGZvciBkZXZlbG9wbWVudCB1c2Ugb25seSAtIERPIE5PVCBVU0UgSU4gUFJPRFVDVElPTiE=
-    expiration: 86400000   # 24 horas en ms
+    secret: ${JWT_SECRET:}
+    expiration: ${JWT_EXPIRATION:86400000}   # 24 horas en ms
+
+  rsa:
+    private-key-pem: ${RSA_PRIVATE_KEY:}
+
+  swe:
+    migraciones:
+      # Las V1..V16 de linked crearon swe_*: core-swe corre después y solo completa (ADR-0003 de dmc00-core).
+      orden: DESPUES_DE_LA_APP
+    # Rol que viaja en el claim "rol" del JWT cuando un usuario tiene varios.
+    jerarquia-de-roles: Administrador,Moderador,Tatuador,Cliente
 
   cloudinary:
-    cloud-name: ${CLOUDINARY_CLOUD_NAME:dev-cloud}
+    cloud-name: ${CLOUDINARY_CLOUD_NAME:}
     api-key: ${CLOUDINARY_API_KEY:}
     api-secret: ${CLOUDINARY_API_SECRET:}
 
@@ -70,16 +92,25 @@ app:
     app-secret: ${META_APP_SECRET:}
     redirect-uri: ${META_REDIRECT_URI:http://localhost:8080/api/instagram/callback}
     graph-api-version: v21.0
+    sincronizacion:
+      # Como el scheduler de Node: cada 2 h, la primera un minuto después de arrancar.
+      # Formato ISO-8601 (PT2H): lo lee también @Scheduled.
+      cada: ${INSTAGRAM_SYNC_INTERVAL:PT2H}
+      demora-inicial: PT1M
+      # Renueva el token cuando le quedan menos días que esto.
+      renovar-antes-de: 30d
+      # Un token vencido desvincula la cuenta. En dev se desactiva: el servidor no corre siempre.
+      desvincular-vencidos: true
 
   frontend:
     base-url: ${FRONT_BASE_URL:http://localhost:4200}
 
   recaptcha:
+    enabled: false
     secret-key: ${RECAPTCHA_SECRET_KEY:}
-    enabled: false   # Habilitar en produccion
 
   news:
     api-key: ${NEWS_API_KEY:}
 
   mail:
-    from: noreply@linked-app.com
+    from: ${MAIL_FROM:noreply@linked-app.com}

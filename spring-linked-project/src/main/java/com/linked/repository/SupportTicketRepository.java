@@ -7,8 +7,10 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
+/** Acceso a tickets de soporte ({@link SupportTicket}). */
 public interface SupportTicketRepository extends JpaRepository<SupportTicket, Long> {
 
+    /** Tickets vinculados al usuario, del más reciente al más antiguo. */
     @Query("SELECT DISTINCT st FROM SupportTicket st " +
            "JOIN st.usuarios u " +
            "WHERE u.username = :username " +

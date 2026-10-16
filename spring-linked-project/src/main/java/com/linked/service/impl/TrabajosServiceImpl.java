@@ -1,67 +1,59 @@
 package com.linked.service.impl;
 
+import com.dmc00.core.data.BaseEntity;
+import com.dmc00.core.swe.repository.SweUsrRepository;
+import com.dmc00.core.web.AppExceptions;
 import com.linked.dto.TrabajoDto;
-import com.linked.exception.AppExceptions;
+import com.linked.integration.AlmacenDeImagenes;
 import com.linked.mapper.TrabajoMapper;
+import com.linked.model.entity.PerfilUsuario;
 import com.linked.model.entity.Trabajo;
 import com.linked.model.entity.TrabajoFavorito;
 import com.linked.model.entity.TrabajoFoto;
-import com.linked.repository.SweUsrRepository;
+import com.linked.repository.PerfilUsuarioRepository;
 import com.linked.repository.TrabajoFavoritoRepository;
 import com.linked.repository.TrabajoRepository;
 import com.linked.service.TrabajosService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+/** Implementación de {@link TrabajosService}. */
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class TrabajosServiceImpl implements TrabajosService {
 
-    private static final int MAX_FOTOS = 5;
+    static final int MAXIMO_DE_FOTOS = 5;
+    static final int TAMANIO_DEL_FEED = 50;
 
     private final TrabajoRepository trabajoRepository;
     private final TrabajoFavoritoRepository favoritoRepository;
-    private final SweUsrRepository sweUsrRepository;
-    private final CloudinaryServiceImpl cloudinaryService;
+    private final SweUsrRepository usuarios;
+    private final PerfilUsuarioRepository perfiles;
+    private final AlmacenDeImagenes imagenes;
     private final TrabajoMapper trabajoMapper;
 
     @Override
-    @Transactional(readOnly = true)
     public List<TrabajoDto.Response> getFeed(Long currentUserId) {
-        Pageable pageable = PageRequest.of(0, 50);
-        List<Trabajo> trabajos = trabajoRepository.findAllActive(pageable).getContent();
-        return enrichWithLikes(trabajos, currentUserId);
+        return aDto(trabajoRepository.findAllActive(PageRequest.of(0, TAMANIO_DEL_FEED)).getContent(), currentUserId);
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<TrabajoDto.Response> getByTatuador(Long tatuadorId, Long currentUserId) {
-        List<Trabajo> trabajos = trabajoRepository
-                .findByTatuador_IdAndStatusOrderByCreationTimestampDesc(tatuadorId, "true");
-        return enrichWithLikes(trabajos, currentUserId);
+        return aDto(trabajoRepository.findByTatuador_IdAndStatusOrderByCreationTimestampDesc(tatuadorId, BaseEntity.ACTIVO),
+                currentUserId);
     }
 
     @Override
-    @Transactional(readOnly = true)
     public TrabajoDto.Response getById(Long id, Long currentUserId) {
-        Trabajo trabajo = getActiveOrThrow(id);
-        TrabajoDto.Response response = trabajoMapper.toResponse(trabajo);
-        if (currentUserId != null) {
-            boolean liked = favoritoRepository.existsByCliente_IdAndTrabajo_Id(currentUserId, id);
-            return new TrabajoDto.Response(
-                    response.id(), response.descripcion(), response.instagramMediaId(),
-                    response.fotos(), response.tatuador(), response.likesCount(), liked,
-                    response.creationTimestamp(), response.status());
-        }
-        return response;
+        return aDto(List.of(activoOError(id)), currentUserId).getFirst();
     }
 
     @Override
@@ -70,25 +62,19 @@ public class TrabajosServiceImpl implements TrabajosService {
         if (fotos == null || fotos.length == 0) {
             throw new AppExceptions.BadRequestException("Se requiere al menos una foto");
         }
-        if (fotos.length > MAX_FOTOS) {
-            throw new AppExceptions.BadRequestException("Máximo " + MAX_FOTOS + " fotos por trabajo");
+        if (fotos.length > MAXIMO_DE_FOTOS) {
+            throw new AppExceptions.BadRequestException("Máximo " + MAXIMO_DE_FOTOS + " fotos por trabajo");
         }
-
         Trabajo trabajo = new Trabajo();
         trabajo.setDescripcion(request.descripcion());
-        trabajo.setTatuador(sweUsrRepository.getReferenceById(tatuadorId));
-
-        List<TrabajoFoto> fotoEntities = new ArrayList<>();
+        trabajo.setTatuador(usuarios.getReferenceById(tatuadorId));
         for (MultipartFile foto : fotos) {
-            String url = cloudinaryService.uploadImage(foto, "trabajos");
-            TrabajoFoto tf = new TrabajoFoto();
-            tf.setImagePath(url);
-            tf.setTrabajo(trabajo);
-            fotoEntities.add(tf);
+            TrabajoFoto trabajoFoto = new TrabajoFoto();
+            trabajoFoto.setImagePath(imagenes.subir(foto, "trabajos"));
+            trabajoFoto.setTrabajo(trabajo);
+            trabajo.getFotos().add(trabajoFoto);
         }
-        trabajo.setFotos(fotoEntities);
-
-        return trabajoMapper.toResponse(trabajoRepository.save(trabajo));
+        return aDto(List.of(trabajoRepository.save(trabajo)), tatuadorId).getFirst();
     }
 
     @Override
@@ -97,22 +83,21 @@ public class TrabajosServiceImpl implements TrabajosService {
         if (favoritoRepository.existsByCliente_IdAndTrabajo_Id(clienteId, trabajoId)) {
             throw new AppExceptions.DuplicateResourceException("Ya marcaste este trabajo como favorito");
         }
-        TrabajoFavorito fav = new TrabajoFavorito();
-        fav.setCliente(sweUsrRepository.getReferenceById(clienteId));
-        fav.setTrabajo(trabajoRepository.getReferenceById(trabajoId));
-        favoritoRepository.save(fav);
+        TrabajoFavorito favorito = new TrabajoFavorito();
+        favorito.setCliente(usuarios.getReferenceById(clienteId));
+        favorito.setTrabajo(activoOError(trabajoId));
+        favoritoRepository.save(favorito);
     }
 
     @Override
     @Transactional
     public void quitarLike(Long clienteId, Long trabajoId) {
-        TrabajoFavorito fav = favoritoRepository.findByCliente_IdAndTrabajo_Id(clienteId, trabajoId)
-                .orElseThrow(() -> new AppExceptions.ResourceNotFoundException("Favorito no encontrado"));
-        favoritoRepository.delete(fav);
+        TrabajoFavorito favorito = favoritoRepository.findByCliente_IdAndTrabajo_Id(clienteId, trabajoId)
+                .orElseThrow(() -> new AppExceptions.ResourceNotFoundException("Favorito", "trabajo", trabajoId));
+        favoritoRepository.delete(favorito);
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<Long> getMisLikesIds(Long clienteId) {
         return favoritoRepository.findTrabajoIdsByClienteId(clienteId);
     }
@@ -120,32 +105,24 @@ public class TrabajosServiceImpl implements TrabajosService {
     @Override
     @Transactional
     public void delete(Long id) {
-        Trabajo trabajo = getActiveOrThrow(id);
-        trabajo.disable();
-        trabajoRepository.save(trabajo);
+        activoOError(id).disable();
     }
 
-    private Trabajo getActiveOrThrow(Long id) {
-        Trabajo t = trabajoRepository.findById(id)
-                .orElseThrow(() -> new AppExceptions.ResourceNotFoundException("Trabajo no encontrado: " + id));
-        if (!t.isActive()) {
-            throw new AppExceptions.ResourceNotFoundException("Trabajo no encontrado: " + id);
-        }
-        return t;
+    private Trabajo activoOError(Long id) {
+        return trabajoRepository.findById(id)
+                .filter(BaseEntity::isActive)
+                .orElseThrow(() -> new AppExceptions.ResourceNotFoundException("Trabajo", "id", id));
     }
 
-    private List<TrabajoDto.Response> enrichWithLikes(List<Trabajo> trabajos, Long currentUserId) {
-        Set<Long> likedIds = currentUserId != null
+    /** Busca una sola vez los perfiles de los tatuadores y los likes de quien consulta. */
+    private List<TrabajoDto.Response> aDto(List<Trabajo> trabajos, Long currentUserId) {
+        Map<Long, PerfilUsuario> perfilesDeTatuadores = perfiles.porUsuario(
+                trabajos.stream().map(trabajo -> trabajo.getTatuador().getId()).distinct().toList());
+        Set<Long> meGustan = currentUserId != null
                 ? Set.copyOf(favoritoRepository.findTrabajoIdsByClienteId(currentUserId))
                 : Set.of();
-
-        return trabajos.stream().map(t -> {
-            TrabajoDto.Response r = trabajoMapper.toResponse(t);
-            boolean liked = likedIds.contains(t.getId());
-            return new TrabajoDto.Response(
-                    r.id(), r.descripcion(), r.instagramMediaId(),
-                    r.fotos(), r.tatuador(), r.likesCount(), liked,
-                    r.creationTimestamp(), r.status());
-        }).toList();
+        return trabajos.stream()
+                .map(trabajo -> trabajoMapper.toResponse(trabajo, perfilesDeTatuadores, meGustan))
+                .toList();
     }
 }

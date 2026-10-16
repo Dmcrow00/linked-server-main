@@ -5,7 +5,6 @@ coverage
 
 .claude/
 .env.example
-CLAUDE.md
 
 # Excepcion: el .env.example de spring-linked-project es una plantilla sin
 # valores reales - documenta que variables hacen falta en el .env local
@@ -45,14 +44,22 @@ src/shared/pg-database/.env
 ##Build
 *.tsbuildinfo
 
-# Imágenes subidas por usuarios al backend Node (fotos de perfil, trabajos,
-# referencias de turnos): son datos personales y no van al repo público.
-# Respaldo local en D:\Desarrollo\dmc00-backups\linked-uploads-20261015.
-nodejs-legacy/uploads/
-
 # Clave RSA de dev del backend Spring - cada entorno genera/inyecta la suya
+# (rsa-privada.pem la genera core-security; rsa-keypair.ser es el formato anterior)
+**/rsa-privada.pem
 **/rsa-keypair.ser
 
 # Maven (spring-linked-project/)
 target/
 *.class
+
+# Eclipse / Spring Tools (spring-linked-project/)
+.classpath
+.project
+.factorypath
+.settings/
+
+# Imágenes subidas por usuarios al backend Node (fotos de perfil, trabajos,
+# referencias de turnos): son datos personales y no van al repo público.
+# Respaldo local en D:\Desarrollo\dmc00-backups\linked-uploads-20261015.
+nodejs-legacy/uploads/

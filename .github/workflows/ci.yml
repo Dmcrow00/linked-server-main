@@ -1,0 +1,94 @@
+# CI del backend Spring de LINKED (spring-linked-project/). Sale de
+# dmc00-deploy-templates/templates/github/ci-backend-java.yml.
+#
+# En cada push y PR a develop y main: instala dmc00-parent y dmc00-core en el repositorio Maven local,
+# compila y corre unitarios + integración. Los *IT usan PostgreSQL en Testcontainers: el runner ya trae
+# Docker. nodejs-legacy/ (la versión Node, en main hasta que se retire) no se compila acá.
+#
+# Secret necesario mientras dmc00-parent y dmc00-core sean privados (Settings -> Secrets and variables ->
+# Actions): CROSS_REPO_PAT, token con permiso de lectura sobre Dmcrow00/dmc00-parent y Dmcrow00/dmc00-core.
+
+name: CI
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Versión de las librerías contra la que se compila. Pasar a un tag (vX.Y.Z) cuando exista el primero:
+  # con una rama, un cambio allá puede romper este build sin que nadie toque este repo.
+  DMC00_PARENT_REF: develop
+  DMC00_CORE_REF: develop
+
+defaults:
+  run:
+    working-directory: spring-linked-project
+
+jobs:
+  build-y-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Checkout de dmc00-parent
+        uses: actions/checkout@v7
+        with:
+          repository: Dmcrow00/dmc00-parent
+          ref: ${{ env.DMC00_PARENT_REF }}
+          token: ${{ secrets.CROSS_REPO_PAT || github.token }}
+          path: _dmc00-parent
+
+      - name: Checkout de dmc00-core
+        uses: actions/checkout@v7
+        with:
+          repository: Dmcrow00/dmc00-core
+          ref: ${{ env.DMC00_CORE_REF }}
+          token: ${{ secrets.CROSS_REPO_PAT || github.token }}
+          path: _dmc00-core
+
+      - name: Java 25
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+          cache-dependency-path: spring-linked-project/pom.xml
+
+      - name: Librerías del workspace en el repositorio Maven local
+        run: |
+          ./mvnw -B -ntp -q install -f ../_dmc00-parent/pom.xml
+          ./mvnw -B -ntp -q install -DskipTests -f ../_dmc00-core/pom.xml
+
+      - name: Compilar y correr los tests (unitarios + integración)
+        run: ./mvnw -B -ntp verify
+
+      - name: Reportes de tests
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: reportes-de-tests
+          path: |
+            spring-linked-project/target/surefire-reports/
+            spring-linked-project/target/failsafe-reports/
+          retention-days: 7
+
+      - name: Cobertura (JaCoCo)
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: cobertura
+          path: |
+            spring-linked-project/target/site/jacoco/
+            spring-linked-project/target/site/jacoco-it/
+          retention-days: 14

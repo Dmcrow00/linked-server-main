@@ -1,6 +1,7 @@
 package com.linked.model.entity;
 
-import com.core.model.entity.BaseEntity;
+import com.dmc00.core.data.BaseEntity;
+import com.dmc00.core.swe.model.entity.SweUsrapl;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -11,6 +12,12 @@ import lombok.Setter;
 
 import java.time.LocalTime;
 
+/**
+ * Franja horaria semanal en la que atiende un tatuador (una por día de la semana).
+ * <p>
+ * Tabla {@code tat_horario_habitual}. A partir de estas franjas se generan los horarios
+ * disponibles para reservar (ver {@code AgendaServiceImpl}).
+ */
 @Entity
 @Table(name = "tat_horario_habitual",
        uniqueConstraints = @UniqueConstraint(
@@ -26,9 +33,10 @@ public class HorarioHabitual extends BaseEntity {
     @JoinColumn(name = "id_tatuador", nullable = false)
     private SweUsrapl tatuador;
 
+    /** Día de la semana con la convención de JavaScript: 0 = domingo … 6 = sábado. */
     @Min(0)
     @Max(6)
-    @Column(name = "dia_semana", nullable = false, columnDefinition = "SMALLINT")
+    @Column(name = "dia_semana", nullable = false)
     private int diaSemana;
 
     @NotNull
@@ -39,6 +47,7 @@ public class HorarioHabitual extends BaseEntity {
     @Column(name = "hora_fin", nullable = false)
     private LocalTime horaFin;
 
+    /** Duración de cada turno en minutos; define el intervalo entre horarios disponibles. */
     @Column(name = "duracion_turno_min", nullable = false)
     private int duracionTurnoMin;
 }

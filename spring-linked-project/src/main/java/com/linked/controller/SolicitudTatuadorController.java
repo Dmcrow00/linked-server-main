@@ -1,8 +1,9 @@
 package com.linked.controller;
 
-import com.linked.dto.ApiResponse;
+import com.dmc00.core.swe.model.entity.SweUsrapl;
+import com.dmc00.core.web.ApiResponse;
 import com.linked.dto.SolicitudTatuadorDto;
-import com.linked.model.entity.SweUsrapl;
+import com.linked.security.Permisos;
 import com.linked.service.SolicitudTatuadorService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -15,22 +16,24 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+/** Revisión de solicitudes para ser tatuador (solo Administrador). */
 @RestController
 @RequestMapping("/api/solicitudes-tatuador")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('Administrador')")
 @Tag(name = "Solicitudes Tatuador", description = "Gestión de solicitudes para ser tatuador")
 public class SolicitudTatuadorController {
 
     private final SolicitudTatuadorService solicitudService;
 
     @GetMapping
+    @PreAuthorize(Permisos.ADMINISTRADOR)
     @Operation(summary = "Listar todas las solicitudes")
     public ResponseEntity<ApiResponse<List<SolicitudTatuadorDto.Response>>> getAll() {
         return ResponseEntity.ok(ApiResponse.ok(solicitudService.getAll()));
     }
 
     @PutMapping("/{id}/aprobar")
+    @PreAuthorize(Permisos.ADMINISTRADOR)
     @Operation(summary = "Aprobar solicitud de tatuador")
     public ResponseEntity<ApiResponse<Void>> aprobar(
             @PathVariable Long id,
@@ -40,6 +43,7 @@ public class SolicitudTatuadorController {
     }
 
     @PutMapping("/{id}/rechazar")
+    @PreAuthorize(Permisos.ADMINISTRADOR)
     @Operation(summary = "Rechazar solicitud de tatuador")
     public ResponseEntity<ApiResponse<Void>> rechazar(
             @PathVariable Long id,

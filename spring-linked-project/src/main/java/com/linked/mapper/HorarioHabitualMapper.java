@@ -6,6 +6,7 @@ import org.mapstruct.*;
 
 import java.util.List;
 
+/** Convierte horarios habituales a DTO; las horas se exponen como texto ISO ({@code HH:mm}). */
 @Mapper(componentModel = "spring",
         nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface HorarioHabitualMapper {

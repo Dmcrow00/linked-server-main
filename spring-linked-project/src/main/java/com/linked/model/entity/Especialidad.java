@@ -1,6 +1,7 @@
 package com.linked.model.entity;
 
-import com.core.model.entity.BaseEntity;
+import com.dmc00.core.data.BaseEntity;
+import com.dmc00.core.swe.model.entity.SweUsrapl;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -8,6 +9,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Estilo de tatuaje (Realismo, Blackwork, Lettering, etc.).
+ * <p>
+ * Tabla {@code tat_especialidad}. Se asocia a los tatuadores mediante la tabla intermedia
+ * {@code tat_tatuador_especialidad} (ver {@link SweUsrapl#getEspecialidades()}).
+ * La baja es lógica: {@code status = "false"}.
+ */
 @Entity
 @Table(name = "tat_especialidad",
        uniqueConstraints = @UniqueConstraint(name = "tat_especialidad_nombre_key", columnNames = "nombre"))

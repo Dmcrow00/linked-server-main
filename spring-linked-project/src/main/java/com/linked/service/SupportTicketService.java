@@ -4,6 +4,7 @@ import com.linked.dto.SupportTicketDto;
 
 import java.util.List;
 
+/** Tickets de soporte: alta por usuarios y seguimiento por administradores y moderadores. */
 public interface SupportTicketService {
 
     List<SupportTicketDto.Response> findAll();

@@ -1,0 +1,125 @@
+# Controles de seguridad del backend Spring de LINKED. Sale de
+# dmc00-deploy-templates/templates/github/seguridad-backend-java.yml.
+#
+# En cada push y PR a develop y main, y todos los lunes (aparecen vulnerabilidades nuevas aunque el
+# código no cambie):
+#   - secretos:     Gitleaks sobre todo el historial (el repo es público)
+#   - codigo:       Semgrep con reglas de Java y OWASP Top 10
+#   - dependencias: SBOM CycloneDX + consulta a OSV (scripts/vulnerabilidades.py)
+#   - imagen:       Trivy sobre la imagen Docker (spring-linked-project/deploy/Dockerfile)
+#
+# Excepciones revisadas a mano, cada una con motivo y fecha:
+#   .gitleaks.toml, .vulnerabilidades-aceptadas, .trivyignore
+#
+# Secret: CROSS_REPO_PAT (igual que en ci.yml).
+
+name: Seguridad
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+  schedule:
+    - cron: '0 9 * * 1'
+  workflow_dispatch: {}
+
+concurrency:
+  group: seguridad-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  DMC00_PARENT_REF: develop
+  DMC00_CORE_REF: develop
+
+jobs:
+  secretos:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Gitleaks (todo el historial)
+        run: >
+          docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.30.1
+          git /repo --redact --no-banner --config /repo/.gitleaks.toml
+
+  codigo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - name: Semgrep (Java y OWASP Top 10)
+        run: >
+          docker run --rm -v "$PWD:/src" -w /src semgrep/semgrep:1.181.0
+          semgrep scan --config p/java --config p/owasp-top-ten --error --metrics=off spring-linked-project/src/main
+
+  dependencias:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: spring-linked-project
+    steps:
+      - uses: actions/checkout@v7
+      - name: Checkout de dmc00-parent
+        uses: actions/checkout@v7
+        with:
+          repository: Dmcrow00/dmc00-parent
+          ref: ${{ env.DMC00_PARENT_REF }}
+          token: ${{ secrets.CROSS_REPO_PAT || github.token }}
+          path: _dmc00-parent
+      - name: Checkout de dmc00-core
+        uses: actions/checkout@v7
+        with:
+          repository: Dmcrow00/dmc00-core
+          ref: ${{ env.DMC00_CORE_REF }}
+          token: ${{ secrets.CROSS_REPO_PAT || github.token }}
+          path: _dmc00-core
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+          cache-dependency-path: spring-linked-project/pom.xml
+      - name: Librerías del workspace en el repositorio Maven local
+        run: |
+          ./mvnw -B -ntp -q install -f ../_dmc00-parent/pom.xml
+          ./mvnw -B -ntp -q install -DskipTests -f ../_dmc00-core/pom.xml
+      - name: Lista de dependencias (SBOM CycloneDX)
+        run: ./mvnw -B -ntp -q org.cyclonedx:cyclonedx-maven-plugin:makeAggregateBom -DoutputFormat=json -DoutputName=sbom
+      - name: Vulnerabilidades conocidas (OSV)
+        run: python3 ../scripts/vulnerabilidades.py target/sbom.json --aceptadas ../.vulnerabilidades-aceptadas
+
+  imagen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - name: Checkout de dmc00-parent
+        uses: actions/checkout@v7
+        with:
+          repository: Dmcrow00/dmc00-parent
+          ref: ${{ env.DMC00_PARENT_REF }}
+          token: ${{ secrets.CROSS_REPO_PAT || github.token }}
+          path: _dmc00-parent
+      - name: Checkout de dmc00-core
+        uses: actions/checkout@v7
+        with:
+          repository: Dmcrow00/dmc00-core
+          ref: ${{ env.DMC00_CORE_REF }}
+          token: ${{ secrets.CROSS_REPO_PAT || github.token }}
+          path: _dmc00-core
+      - uses: docker/setup-buildx-action@v4
+      - name: Imagen de producción
+        run: >
+          docker buildx build --build-context parent=_dmc00-parent --build-context core=_dmc00-core
+          -f spring-linked-project/deploy/Dockerfile -t app:ci --load spring-linked-project
+      - name: Trivy (altas y críticas con arreglo disponible)
+        run: >
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD:/repo" aquasec/trivy:0.76.0 image
+          --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --ignorefile /repo/.trivyignore --no-progress app:ci
