@@ -171,7 +171,7 @@ VALUES ('admin', 'admin@linked-app.com', '1990-01-01', 'Admin', 'LINKED', 'SYSTE
 ON CONFLICT (username) DO NOTHING;
 
 INSERT INTO swe_usrauth (id_usrapl, password, creationuser)
-SELECT u.id, '$2a$10$RSHX1.3YoGJuZN.xWfGCweRMEJ6EJv/aUBmFpDNv.LxKZ0cWQHMiC', 'SYSTEM'
+SELECT u.id, '$2a$10$oO1RxtgnEJkQ3EBXcTIqsOOqBsNLzBiRq.zR9buAZVQj1brdLPnYa', 'SYSTEM'
 FROM swe_usrapl u
 WHERE u.username = 'admin'
   AND NOT EXISTS (SELECT 1 FROM swe_usrauth a WHERE a.id_usrapl = u.id);

@@ -17,6 +17,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -40,6 +41,9 @@ import java.util.stream.Collectors;
 @Setter
 @NoArgsConstructor
 public class SweUsrapl extends SweAuditableEntity implements UserDetails {
+
+    private static final List<String> JERARQUIA_ROLES =
+            List.of("Administrador", "Moderador", "Tatuador", "Cliente");
 
     @Size(max = 25)
     @Column(name = "realname", length = 25)
@@ -162,6 +166,27 @@ public class SweUsrapl extends SweAuditableEntity implements UserDetails {
         return userRoles.stream()
                 .anyMatch(ur -> "true".equals(ur.getStatus())
                         && rolDescription.equalsIgnoreCase(ur.getRolapl().getDescription()));
+    }
+
+    /**
+     * Rol vigente de mayor jerarquía, o {@code null} si no tiene ninguno.
+     * <p>
+     * La interfaz trabaja con un solo rol por usuario, como hacía el backend Node; si un
+     * administrador le asigna varios, se muestra el más alto. Un rol que no figure en la
+     * jerarquía queda detrás de los conocidos.
+     */
+    public String getRolPrincipal() {
+        if (userRoles == null) return null;
+        return userRoles.stream()
+                .filter(ur -> "true".equals(ur.getStatus()))
+                .map(ur -> ur.getRolapl().getDescription())
+                .min(Comparator.comparingInt(SweUsrapl::posicionEnJerarquia))
+                .orElse(null);
+    }
+
+    private static int posicionEnJerarquia(String rol) {
+        int posicion = JERARQUIA_ROLES.indexOf(rol);
+        return posicion >= 0 ? posicion : JERARQUIA_ROLES.size();
     }
 
     public void softDelete() {

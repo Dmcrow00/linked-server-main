@@ -1,5 +1,6 @@
 package com.linked.security;
 
+import com.linked.model.entity.SweUsrapl;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -35,8 +36,22 @@ public class JwtService {
     /** El state de OAuth solo tiene que sobrevivir al ida y vuelta con el proveedor. */
     private static final long OAUTH_STATE_EXPIRATION_MS = 10 * 60 * 1000L;
 
-    public String generateToken(UserDetails userDetails) {
-        return generateToken(new HashMap<>(), userDetails);
+    /**
+     * Token de sesión de un usuario. Además del username lleva su {@code id} y su {@code rol}
+     * principal, que el cliente lee para armar la interfaz (accesos rápidos, guards de navegación).
+     * <p>
+     * Esos claims son solo informativos: la autorización no los usa. {@link JwtAuthenticationFilter}
+     * vuelve a cargar el usuario y sus roles vigentes desde la base en cada request, así que un
+     * cambio de roles rige enseguida en el backend aunque el token diga otra cosa hasta el próximo login.
+     */
+    public String generateToken(SweUsrapl user) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("id", user.getId());
+        String rol = user.getRolPrincipal();
+        if (rol != null) {
+            claims.put("rol", rol);
+        }
+        return generateToken(claims, user);
     }
 
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {

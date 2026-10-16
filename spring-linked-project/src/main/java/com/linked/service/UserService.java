@@ -24,6 +24,9 @@ public interface UserService {
      */
     AuthDto.TokenResponse registerTatuador(UserDto.RegisterTatuadorRequest request);
 
+    /** Perfil público de un tatuador para su portfolio; no requiere sesión. */
+    UserDto.PerfilPublico findPerfilPublico(Long id);
+
     UserDto.Response update(Long id, UserDto.UpdateRequest request);
 
     /** Sube la foto a Cloudinary y guarda su URL en el perfil. */

@@ -13,22 +13,46 @@ ALTER TABLE swe_usrapl
     ADD COLUMN IF NOT EXISTS surname  VARCHAR(25),
     ADD COLUMN IF NOT EXISTS username VARCHAR(25);
 
--- ── 2. Migrar datos de columnas viejas a nuevas ──────────────────
-UPDATE swe_usrapl SET realname = nombre          WHERE realname IS NULL AND nombre          IS NOT NULL;
-UPDATE swe_usrapl SET surname  = apellido        WHERE surname  IS NULL AND apellido        IS NOT NULL;
-UPDATE swe_usrapl SET username = nombre_usuario  WHERE username IS NULL AND nombre_usuario  IS NOT NULL;
+-- ── 2 a 4. Copiar datos de las columnas del backend Node ─────────
+-- Las columnas viejas solo existen en una base migrada desde Node. En una base nueva V1 ya
+-- crea las definitivas y no hay nada que copiar: cada UPDATE corre solo si su columna existe
+-- (PL/pgSQL no valida las columnas de una sentencia hasta ejecutarla).
+DO $$
+DECLARE
+    columnas_node TEXT[];
+BEGIN
+    SELECT array_agg(column_name::TEXT) INTO columnas_node
+    FROM information_schema.columns
+    WHERE table_schema = current_schema()
+      AND table_name = 'swe_usrapl'
+      AND column_name IN ('nombre', 'apellido', 'nombre_usuario', 'fecha_nacimiento', 'foto_perfil');
 
--- ── 3. Migrar birth_date desde fecha_nacimiento (para filas con el DEFAULT '1990-01-01') ──
-UPDATE swe_usrapl
-SET birth_date = fecha_nacimiento
-WHERE fecha_nacimiento IS NOT NULL
-  AND fecha_nacimiento <> '1990-01-01'
-  AND birth_date = '1990-01-01';
+    IF 'nombre' = ANY (columnas_node) THEN
+        UPDATE swe_usrapl SET realname = nombre WHERE realname IS NULL AND nombre IS NOT NULL;
+    END IF;
+    IF 'apellido' = ANY (columnas_node) THEN
+        UPDATE swe_usrapl SET surname = apellido WHERE surname IS NULL AND apellido IS NOT NULL;
+    END IF;
+    IF 'nombre_usuario' = ANY (columnas_node) THEN
+        UPDATE swe_usrapl SET username = nombre_usuario WHERE username IS NULL AND nombre_usuario IS NOT NULL;
+    END IF;
 
--- ── 4. Migrar profile_photo desde foto_perfil ────────────────────
-UPDATE swe_usrapl
-SET profile_photo = foto_perfil
-WHERE foto_perfil IS NOT NULL AND profile_photo IS NULL;
+    -- birth_date desde fecha_nacimiento (para filas con el DEFAULT '1990-01-01')
+    IF 'fecha_nacimiento' = ANY (columnas_node) THEN
+        UPDATE swe_usrapl
+        SET birth_date = fecha_nacimiento
+        WHERE fecha_nacimiento IS NOT NULL
+          AND fecha_nacimiento <> '1990-01-01'
+          AND birth_date = '1990-01-01';
+    END IF;
+
+    -- profile_photo desde foto_perfil
+    IF 'foto_perfil' = ANY (columnas_node) THEN
+        UPDATE swe_usrapl
+        SET profile_photo = foto_perfil
+        WHERE foto_perfil IS NOT NULL AND profile_photo IS NULL;
+    END IF;
+END $$;
 
 -- ── 5. Asegurar que username no tenga NULLs antes del NOT NULL ───
 UPDATE swe_usrapl SET username = 'user_' || id WHERE username IS NULL;

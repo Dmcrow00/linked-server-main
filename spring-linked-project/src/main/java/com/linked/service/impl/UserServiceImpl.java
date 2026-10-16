@@ -1,6 +1,7 @@
 package com.linked.service.impl;
 
 import com.linked.dto.AuthDto;
+import com.linked.dto.EspecialidadDto;
 import com.linked.dto.UserDto;
 import com.linked.exception.AppExceptions;
 import com.linked.mapper.SweUsrMapper;
@@ -27,6 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Period;
 import java.util.List;
 import java.util.UUID;
 
@@ -71,6 +73,26 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     public UserDto.Response findById(Long id) {
         return sweUsrMapper.toResponse(getActiveOrThrow(id));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserDto.PerfilPublico findPerfilPublico(Long id) {
+        SweUsrapl user = getActiveOrThrow(id);
+        // Solo los tatuadores tienen portfolio público; para el resto el perfil no existe.
+        if (!user.hasRole("Tatuador")) {
+            throw new AppExceptions.ResourceNotFoundException("Tatuador no encontrado: " + id);
+        }
+        return new UserDto.PerfilPublico(
+                user.getId(),
+                user.getUsername(),
+                user.getProfilePhoto(),
+                user.getEstudio(),
+                calcularAntiguedad(user.getFechaInicioActividad()),
+                user.getEspecialidades().stream()
+                        .map(e -> new EspecialidadDto.Response(
+                                e.getId(), e.getNombre(), e.getDescripcion(), e.getStatus()))
+                        .toList());
     }
 
     @Override
@@ -239,6 +261,11 @@ public class UserServiceImpl implements UserService {
         return u;
     }
 
+    /** Años cumplidos desde el inicio de actividad; se publica así para no revelar la fecha. */
+    private Integer calcularAntiguedad(LocalDate desde) {
+        return desde != null ? Period.between(desde, LocalDate.now()).getYears() : null;
+    }
+
     private void validateNewUser(String username, String email) {
         if (sweUsrRepository.existsByUsername(username)) {
             throw new AppExceptions.DuplicateResourceException("El nombre de usuario ya está en uso");
@@ -275,6 +302,8 @@ public class UserServiceImpl implements UserService {
         SweUsrrolapl ur = new SweUsrrolapl();
         ur.setUsrapl(user);
         ur.setRolapl(rol);
-        sweUsrRolRepository.save(ur);
+        // El token del registro lee el rol de la colección del usuario. Se agrega la instancia
+        // que devuelve save() (la gestionada) para que el cascade no la vuelva a insertar.
+        user.getUserRoles().add(sweUsrRolRepository.save(ur));
     }
 }

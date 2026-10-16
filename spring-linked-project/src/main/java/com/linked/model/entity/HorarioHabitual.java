@@ -35,7 +35,7 @@ public class HorarioHabitual extends BaseEntity {
     /** Día de la semana con la convención de JavaScript: 0 = domingo … 6 = sábado. */
     @Min(0)
     @Max(6)
-    @Column(name = "dia_semana", nullable = false, columnDefinition = "SMALLINT")
+    @Column(name = "dia_semana", nullable = false)
     private int diaSemana;
 
     @NotNull

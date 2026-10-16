@@ -82,6 +82,21 @@ public class UserDto {
             String estudio
     ) {}
 
+    /**
+     * Perfil público de un tatuador: lo que muestra su portfolio sin sesión iniciada.
+     * <p>
+     * Como {@link Publico}, no expone nombre real, contacto ni ubicación; suma lo que describe
+     * su trabajo. La antigüedad va en años cumplidos para no publicar la fecha exacta de inicio.
+     */
+    public record PerfilPublico(
+            Long id,
+            String username,
+            String profilePhoto,
+            String estudio,
+            Integer antiguedad,
+            List<EspecialidadDto.Response> especialidades
+    ) {}
+
     /** Perfil de un usuario con sus roles vigentes y especialidades. Fechas en formato {@code yyyy-MM-dd}. */
     public record Response(
             Long id,
