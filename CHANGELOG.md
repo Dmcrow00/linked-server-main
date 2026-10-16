@@ -27,6 +27,8 @@ Node, ya retirada, no tenía historial de versiones.
 
 ### Cambiado
 
+- Las versiones de Jackson y Tomcat corregidas por CVE pasan a `dmc00-parent` (#3): el `pom.xml` ya no las fija.
+  Las dependencias resueltas no cambian.
 - Java 25 y Spring Boot 4.1 sobre `dmc00-parent`. Respuestas, errores, JWT, RSA, contraseñas, CORS,
   reCAPTCHA, usuarios, roles, login y menú vienen de `dmc00-core` (`core-web`, `core-data`,
   `core-security`, `core-swe`).
