@@ -58,3 +58,8 @@ target/
 .project
 .factorypath
 .settings/
+
+# Imágenes subidas por usuarios al backend Node (fotos de perfil, trabajos,
+# referencias de turnos): son datos personales y no van al repo público.
+# Respaldo local en D:\Desarrollo\dmc00-backups\linked-uploads-20261015.
+nodejs-legacy/uploads/
