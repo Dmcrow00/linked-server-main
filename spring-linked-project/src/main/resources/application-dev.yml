@@ -1,29 +1,29 @@
 # ============================================================
 #  PERFIL: DESARROLLO (dev)
-#  Activar con: -Dspring.profiles.active=dev
+#  ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+#  Los valores locales (contraseña de la base, claves de Cloudinary/Meta) van en .env,
+#  que no se versiona: copiar .env.example.
 # ============================================================
 
 spring:
+  config:
+    import: optional:file:.env[.properties]
+
   datasource:
-    url: jdbc:postgresql://localhost:5432/linked-main-db
-    username: postgres
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/linked-main-db}
+    username: ${DATABASE_USER:postgres}
     password: ${DATABASE_PASSWORD}
-    driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 5
       minimum-idle: 2
       connection-timeout: 20000
 
   jpa:
-    hibernate:
-      ddl-auto: validate
     show-sql: true
 
   mail:
     host: localhost
-    port: 1025        # MailHog o Mailtrap para desarrollo
-    username:
-    password:
+    port: 1025        # MailHog o Mailpit
     properties:
       mail:
         smtp:
@@ -31,21 +31,24 @@ spring:
           starttls:
             enable: false
 
-  devtools:
-    restart:
-      enabled: true
-    livereload:
-      enabled: true
-
 app:
+  jwt:
+    # También en dev viene de .env (JWT_SECRET): ningún secreto vive en el repo, que es público.
+    secret: ${JWT_SECRET}
   rsa:
+    # Par RSA de desarrollo: se genera la primera vez en este archivo (ignorado por git).
+    key-path: rsa-privada.pem
+    # Acepta contraseñas sin cifrar para probar desde Swagger o Postman.
     plaintext-fallback: true
-    key-path: rsa-keypair.ser
+  instagram:
+    sincronizacion:
+      desvincular-vencidos: false
+  # Contraseña que AdminSemillaDevRunner le pone al admin semilla (vacía = no la toca).
+  dev:
+    admin-password: ${ADMIN_DEV_PASSWORD:}
 
 logging:
   level:
     root: INFO
     com.linked: DEBUG
-    org.springframework.web: DEBUG
     org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

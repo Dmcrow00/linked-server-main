@@ -1,9 +1,10 @@
 package com.linked.controller;
 
-import com.linked.dto.ApiResponse;
+import com.dmc00.core.swe.model.entity.SweUsrapl;
+import com.dmc00.core.web.ApiResponse;
 import com.linked.dto.TurnoMensajeDto;
 import com.linked.dto.TurnoSesionDto;
-import com.linked.model.entity.SweUsrapl;
+import com.linked.security.Permisos;
 import com.linked.service.TurnosService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,7 +29,7 @@ public class TurnosController {
     private final TurnosService turnosService;
 
     @PostMapping(value = "/solicitar", consumes = "multipart/form-data")
-    @PreAuthorize("hasRole('Cliente')")
+    @PreAuthorize(Permisos.CLIENTE)
     @Operation(summary = "Solicitar un turno")
     public ResponseEntity<ApiResponse<TurnoSesionDto.Response>> solicitar(
             @AuthenticationPrincipal SweUsrapl currentUser,
@@ -48,6 +49,7 @@ public class TurnosController {
     }
 
     @GetMapping("/mis-reservas-cliente")
+    @PreAuthorize(Permisos.AUTENTICADO)
     @Operation(summary = "Mis turnos como cliente")
     public ResponseEntity<ApiResponse<List<TurnoSesionDto.Response>>> misReservasCliente(
             @AuthenticationPrincipal SweUsrapl currentUser) {
@@ -56,7 +58,7 @@ public class TurnosController {
     }
 
     @GetMapping("/mis-turnos")
-    @PreAuthorize("hasRole('Tatuador')")
+    @PreAuthorize(Permisos.TATUADOR)
     @Operation(summary = "Mis turnos como tatuador")
     public ResponseEntity<ApiResponse<List<TurnoSesionDto.Response>>> misTurnos(
             @AuthenticationPrincipal SweUsrapl currentUser) {
@@ -65,7 +67,7 @@ public class TurnosController {
     }
 
     @PatchMapping("/gestionar/{id}")
-    @PreAuthorize("hasRole('Tatuador')")
+    @PreAuthorize(Permisos.TATUADOR)
     @Operation(summary = "Gestionar estado de un turno (tatuador)")
     public ResponseEntity<ApiResponse<TurnoSesionDto.Response>> gestionar(
             @PathVariable Long id,
@@ -76,6 +78,7 @@ public class TurnosController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize(Permisos.AUTENTICADO)
     @Operation(summary = "Actualizar datos de un turno")
     public ResponseEntity<ApiResponse<TurnoSesionDto.Response>> update(
             @PathVariable Long id,
@@ -86,6 +89,7 @@ public class TurnosController {
     }
 
     @GetMapping("/{id}/mensajes")
+    @PreAuthorize(Permisos.AUTENTICADO)
     @Operation(summary = "Obtener mensajes de un turno")
     public ResponseEntity<ApiResponse<List<TurnoMensajeDto.Response>>> getMensajes(
             @PathVariable Long id,
@@ -94,6 +98,7 @@ public class TurnosController {
     }
 
     @PostMapping("/{id}/mensajes")
+    @PreAuthorize(Permisos.AUTENTICADO)
     @Operation(summary = "Enviar mensaje en un turno")
     public ResponseEntity<ApiResponse<TurnoMensajeDto.Response>> enviarMensaje(
             @PathVariable Long id,

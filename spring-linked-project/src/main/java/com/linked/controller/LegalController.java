@@ -1,10 +1,12 @@
 package com.linked.controller;
 
+import com.linked.security.Permisos;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -21,6 +23,7 @@ public class LegalController {
     private final TemplateEngine templateEngine;
 
     @GetMapping("/privacidad")
+    @PreAuthorize(Permisos.PUBLICO)
     @Operation(summary = "Política de privacidad")
     public ResponseEntity<String> privacidad() {
         return ResponseEntity.ok()
@@ -29,6 +32,7 @@ public class LegalController {
     }
 
     @GetMapping("/terminos")
+    @PreAuthorize(Permisos.PUBLICO)
     @Operation(summary = "Términos y condiciones")
     public ResponseEntity<String> terminos() {
         return ResponseEntity.ok()
@@ -37,6 +41,7 @@ public class LegalController {
     }
 
     @GetMapping("/datadeletion")
+    @PreAuthorize(Permisos.PUBLICO)
     @Operation(summary = "Política de eliminación de datos")
     public ResponseEntity<String> dataDeletion() {
         return ResponseEntity.ok()

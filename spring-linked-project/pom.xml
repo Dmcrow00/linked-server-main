@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <!-- Versiones (Java 25, Spring Boot 4.1, dmc00-core, MapStruct...) y build común: dmc00-parent. -->
     <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.3.5</version>
+        <groupId>com.dmc00</groupId>
+        <artifactId>dmc00-parent</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
         <relativePath/>
     </parent>
 
@@ -17,41 +17,63 @@
     <version>1.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>LINKED - Tattoo Studio Platform</name>
-    <description>API REST para gestión de estudios de tatuajes - migración Java 21</description>
+    <description>API REST de LINKED: agenda, turnos, portfolio e Instagram de estudios de tatuajes.</description>
 
     <properties>
-        <java.version>21</java.version>
-        <mapstruct.version>1.5.5.Final</mapstruct.version>
-        <!-- Pisa la version que trae spring-boot-starter-parent 3.3.5 (1.18.34),
-             que no compila con JDK 25. Misma version que usan core/shop-core. -->
-        <lombok.version>1.18.46</lombok.version>
-        <lombok-mapstruct-binding.version>0.2.0</lombok-mapstruct-binding.version>
-        <cloudinary.version>1.38.0</cloudinary.version>
+        <github.repo>linked-server-main</github.repo>
     </properties>
 
     <dependencies>
-        <!-- ==================== SPRING BOOT CORE ==================== -->
+        <!-- ==================== dmc00-core ==================== -->
+        <!-- ApiResponse, errores, BaseEntity, JWT, RSA, contraseñas, usuarios, roles, login y menú -->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter</artifactId>
+            <groupId>com.dmc00</groupId>
+            <artifactId>core-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.dmc00</groupId>
+            <artifactId>core-data</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.dmc00</groupId>
+            <artifactId>core-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.dmc00</groupId>
+            <artifactId>core-swe</artifactId>
         </dependency>
 
-        <!-- ==================== WEB (REST API) ==================== -->
+        <!-- ==================== Web y validación ==================== -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
+            <artifactId>spring-boot-starter-webmvc</artifactId>
         </dependency>
-
-        <!-- ==================== VALIDACIÓN ==================== -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        <!-- Clientes HTTP de Instagram y noticias -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-restclient</artifactId>
+        </dependency>
 
-        <!-- ==================== JPA + POSTGRESQL ==================== -->
+        <!-- ==================== Persistencia ==================== -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-flyway</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
         </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>
@@ -59,122 +81,52 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- ==================== FLYWAY ==================== -->
-        <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-database-postgresql</artifactId>
-        </dependency>
-
-        <!-- ==================== SEGURIDAD ==================== -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-security</artifactId>
-        </dependency>
-
-        <!-- ==================== JWT (JJWT 0.12.x) ==================== -->
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-api</artifactId>
-            <version>0.12.6</version>
-        </dependency>
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-impl</artifactId>
-            <version>0.12.6</version>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-jackson</artifactId>
-            <version>0.12.6</version>
-            <scope>runtime</scope>
-        </dependency>
-
-        <!-- ==================== EMAIL ==================== -->
+        <!-- ==================== Mails y páginas legales (Thymeleaf) ==================== -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-mail</artifactId>
         </dependency>
-
-        <!-- ==================== THYMELEAF (templates de email + legal) ==================== -->
-        <!-- Desde Thymeleaf 3.1 (incluido en Spring Boot 3.x) el soporte para java.time
-             viene integrado en el dialecto estándar: #temporals está disponible por defecto.
-             No se requiere la extra thymeleaf-extras-java8time. -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
         </dependency>
 
-        <!-- ==================== WEBCLIENT (Instagram, ReCaptcha, News) ==================== -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-webflux</artifactId>
-        </dependency>
-
-        <!-- ==================== CLOUDINARY ==================== -->
+        <!-- ==================== Imágenes ==================== -->
         <dependency>
             <groupId>com.cloudinary</groupId>
-            <artifactId>cloudinary-http44</artifactId>
-            <version>${cloudinary.version}</version>
+            <artifactId>cloudinary-http5</artifactId>
         </dependency>
 
-        <!-- ==================== MAPSTRUCT ==================== -->
+        <!-- ==================== Mapeo y utilidades ==================== -->
         <dependency>
             <groupId>org.mapstruct</groupId>
             <artifactId>mapstruct</artifactId>
-            <version>${mapstruct.version}</version>
         </dependency>
-
-        <!-- ==================== LOMBOK ==================== -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
 
-        <!-- ==================== SWAGGER / OPENAPI ==================== -->
+        <!-- ==================== Operación ==================== -->
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.6.0</version>
         </dependency>
-
-        <!-- ==================== ACTUATOR ==================== -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
-        <!-- ==================== DEV TOOLS ==================== -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-devtools</artifactId>
-            <scope>runtime</scope>
-            <optional>true</optional>
-        </dependency>
-
-        <!-- ==================== DOTENV (carga .env local, no se versiona) ==================== -->
-        <dependency>
-            <groupId>me.paulschwarz</groupId>
-            <artifactId>spring-dotenv</artifactId>
-            <version>4.0.0</version>
-        </dependency>
-
-        <!-- ==================== DMC00-CORE (librería local) ==================== -->
-        <dependency>
-            <groupId>com.core</groupId>
-            <artifactId>spring-core-abstract</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
-        </dependency>
-
-        <!-- ==================== TESTING ==================== -->
+        <!-- ==================== Tests ==================== -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webmvc-test</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -182,9 +134,10 @@
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- PostgresContenedor (Testcontainers) y ReglasDeArquitectura (ArchUnit) -->
         <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
+            <groupId>com.dmc00</groupId>
+            <artifactId>core-test</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -203,51 +156,6 @@
                     </excludes>
                 </configuration>
             </plugin>
-
-            <!-- Compilador con Lombok + MapStruct -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
-                    <annotationProcessorPaths>
-                        <path>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                            <version>${lombok.version}</version>
-                        </path>
-                        <path>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok-mapstruct-binding</artifactId>
-                            <version>${lombok-mapstruct-binding.version}</version>
-                        </path>
-                        <path>
-                            <groupId>org.mapstruct</groupId>
-                            <artifactId>mapstruct-processor</artifactId>
-                            <version>${mapstruct.version}</version>
-                        </path>
-                    </annotationProcessorPaths>
-                </configuration>
-            </plugin>
         </plugins>
     </build>
-
-    <profiles>
-        <profile>
-            <id>dev</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <properties>
-                <spring.profiles.active>dev</spring.profiles.active>
-            </properties>
-        </profile>
-        <profile>
-            <id>prod</id>
-            <properties>
-                <spring.profiles.active>prod</spring.profiles.active>
-            </properties>
-        </profile>
-    </profiles>
 </project>

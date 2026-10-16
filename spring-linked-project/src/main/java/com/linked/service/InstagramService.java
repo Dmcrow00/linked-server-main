@@ -1,30 +1,47 @@
 package com.linked.service;
 
 import com.linked.dto.InstagramStatusDto;
+import com.linked.dto.SincronizacionInstagramDto;
+
+import java.util.List;
 
 /**
- * Integración con Instagram: vinculación de la cuenta del tatuador por OAuth e importación
- * de sus posts como trabajos del portfolio.
+ * Integración con Instagram: vinculación de la cuenta del tatuador por OAuth e importación de sus
+ * publicaciones como trabajos del portfolio.
  */
 public interface InstagramService {
 
-    /** URL de autorización de Instagram; el ID del tatuador viaja en {@code state} para el callback. */
+    /** URL de autorización de Instagram; el {@code state} lleva el id del tatuador firmado y con vencimiento. */
     String initiateOAuth(Long tatuadorId);
 
-    /** Canjea el código de autorización por un token de larga duración y lo guarda para el tatuador. */
+    /**
+     * Canjea el código por un token de larga duración, lo guarda y copia usuario y foto de
+     * Instagram al perfil. Publica {@link CuentaVinculada} para importar las publicaciones.
+     */
     void handleCallback(String code, String state);
 
     /**
-     * Importa como trabajos las imágenes y carruseles que todavía no se importaron. Los errores
-     * de la API se registran en el log y no se propagan.
+     * Importa las publicaciones nuevas (imágenes y carruseles) y da de baja los trabajos cuya
+     * publicación se borró en Instagram. Si el token venció, desvincula la cuenta y responde 409.
      */
-    void syncPosts(Long tatuadorId);
-
-    /** Igual que {@link #syncPosts} pero en segundo plano; se usa al iniciar sesión. */
-    void syncAsync(Long tatuadorId);
+    SincronizacionInstagramDto syncPosts(Long tatuadorId);
 
     InstagramStatusDto getStatus(Long tatuadorId);
 
-    /** Elimina el token guardado; los trabajos ya importados se conservan. */
+    /** Borra el token y limpia el usuario y la foto de Instagram del perfil; los trabajos importados quedan. */
     void disconnect(Long tatuadorId);
+
+    /** Tatuadores con una cuenta vinculada. */
+    List<Long> tatuadoresVinculados();
+
+    /**
+     * Lo que hace la tarea programada con cada cuenta, como el scheduler de Node: si el token venció
+     * desvincula (según {@code app.instagram.sincronizacion.desvincular-vencidos}); si vence pronto lo
+     * renueva; después sincroniza. Si el tatuador no tiene cuenta vinculada no hace nada.
+     */
+    void mantener(Long tatuadorId);
+
+    /** Se publica cuando un tatuador termina de vincular su cuenta. */
+    record CuentaVinculada(Long tatuadorId) {
+    }
 }

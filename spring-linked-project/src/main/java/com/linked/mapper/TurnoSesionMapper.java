@@ -1,35 +1,29 @@
 package com.linked.mapper;
 
 import com.linked.dto.TurnoSesionDto;
+import com.linked.model.entity.ImagenRef;
+import com.linked.model.entity.PerfilUsuario;
 import com.linked.model.entity.TurnoSesion;
-import org.mapstruct.*;
+import org.mapstruct.Context;
+import org.mapstruct.InjectionStrategy;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
-import java.util.List;
+import java.util.Map;
 
 /**
- * Convierte turnos a su DTO de respuesta. Las fechas se exponen en ISO-8601 local.
- * <p>
- * Las expresiones usan {@code sweUsrMapper}, que es el campo que MapStruct genera en la
- * implementación para el mapper declarado en {@code uses}.
+ * Convierte turnos a su DTO de respuesta. La expresión de {@code tatuadores} usa
+ * {@code usuarioMapper}, el campo que MapStruct genera para el mapper declarado en {@code uses}.
  */
-@Mapper(componentModel = "spring",
-        uses = {SweUsrMapper.class, TurnoMensajeMapper.class},
-        nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+@Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR, uses = {UsuarioMapper.class, TurnoMensajeMapper.class, FormatoDeFechas.class})
 public interface TurnoSesionMapper {
 
-    @Mapping(target = "cliente", source = "cliente")
+    /** @param perfiles perfiles del cliente y de los tatuadores del turno */
     @Mapping(target = "tatuadores",
-             expression = "java(ts.getTurnoTatuadores().stream().map(tt -> sweUsrMapper.toResponse(tt.getTatuador())).toList())")
-    @Mapping(target = "imagenesRef",
-             expression = "java(ts.getImagenesRef().stream().map(ir -> ir.getImagePath()).toList())")
-    @Mapping(target = "mensajes", source = "mensajes")
-    @Mapping(target = "creationTimestamp",
-             expression = "java(ts.getCreationTimestamp() != null ? ts.getCreationTimestamp().format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null)")
-    @Mapping(target = "fechaHoraInicio",
-             expression = "java(ts.getFechaHoraInicio() != null ? ts.getFechaHoraInicio().format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null)")
-    @Mapping(target = "fechaHoraFin",
-             expression = "java(ts.getFechaHoraFin() != null ? ts.getFechaHoraFin().format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null)")
-    TurnoSesionDto.Response toResponse(TurnoSesion ts);
+             expression = "java(ts.getTurnoTatuadores().stream().map(tt -> usuarioMapper.toResponse(tt.getTatuador(), perfiles)).toList())")
+    TurnoSesionDto.Response toResponse(TurnoSesion ts, @Context Map<Long, PerfilUsuario> perfiles);
 
-    List<TurnoSesionDto.Response> toResponseList(List<TurnoSesion> list);
+    default String ruta(ImagenRef imagen) {
+        return imagen.getImagePath();
+    }
 }

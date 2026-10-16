@@ -1,109 +1,93 @@
 package com.linked.service.impl;
 
 import com.linked.dto.NewsArticleDto;
-import lombok.RequiredArgsConstructor;
+import com.linked.service.NewsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 
-/**
- * Noticias sobre tatuajes para la home del cliente web.
- * <p>
- * Usa NewsAPI cuando hay {@code app.news.api-key} configurada. Si no hay clave o la llamada
- * falla, recurre a los posts más votados de la semana en Reddit r/tattoos.
- */
+/** Implementación de {@link NewsService}. */
 @Slf4j
 @Service
-@RequiredArgsConstructor
-public class NewsServiceImpl {
+public class NewsServiceImpl implements NewsService {
 
-    private final WebClient.Builder webClientBuilder;
+    static final String NEWS_API = "https://newsapi.org/v2/everything?q=tattoo&language=es&sortBy=publishedAt&pageSize=20&apiKey={clave}";
+    static final String REDDIT = "https://www.reddit.com/r/tattoos/top.json?limit=20&t=week";
 
-    @Value("${app.news.api-key:}")
-    private String newsApiKey;
+    private final RestClient http;
+    private final String claveNewsApi;
 
-    @SuppressWarnings("unchecked")
+    public NewsServiceImpl(RestClient.Builder http, @Value("${app.news.api-key:}") String claveNewsApi) {
+        this.http = http.build();
+        this.claveNewsApi = claveNewsApi;
+    }
+
+    @Override
     public List<NewsArticleDto> getLatestNews() {
-        if (newsApiKey == null || newsApiKey.isBlank()) {
-            return getFallbackNews();
+        if (claveNewsApi == null || claveNewsApi.isBlank()) {
+            return desdeReddit();
         }
-
         try {
-            Map<?, ?> response = webClientBuilder.build()
-                    .get()
-                    .uri("https://newsapi.org/v2/everything" +
-                         "?q=tattoo&language=es&sortBy=publishedAt&pageSize=20" +
-                         "&apiKey=" + newsApiKey)
-                    .retrieve()
-                    .bodyToMono(Map.class)
-                    .block();
-
-            if (response == null || !"ok".equals(response.get("status"))) {
-                return getFallbackNews();
+            RespuestaNewsApi respuesta = http.get().uri(NEWS_API, claveNewsApi).retrieve().body(RespuestaNewsApi.class);
+            if (respuesta == null || !"ok".equals(respuesta.status()) || respuesta.articles() == null) {
+                return desdeReddit();
             }
-
-            List<Map<?, ?>> articles = (List<Map<?, ?>>) response.get("articles");
-            if (articles == null) return List.of();
-
-            return articles.stream()
-                    .map(a -> new NewsArticleDto(
-                            (String) a.get("title"),
-                            (String) a.get("url"),
-                            (String) a.get("description"),
-                            (String) a.get("publishedAt"),
-                            a.get("source") instanceof Map<?, ?> src ? (String) src.get("name") : null
-                    ))
-                    .filter(dto -> dto.title() != null)
+            return respuesta.articles().stream()
+                    .filter(articulo -> articulo.title() != null)
+                    .map(articulo -> new NewsArticleDto(articulo.title(), articulo.url(), articulo.description(),
+                            articulo.publishedAt(), articulo.source() != null ? articulo.source().name() : null))
                     .toList();
-
-        } catch (Exception e) {
-            log.error("Failed to fetch news: {}", e.getMessage());
-            return getFallbackNews();
+        } catch (RestClientException ex) {
+            log.warn("NewsAPI no respondió, se usa Reddit: {}", ex.getMessage());
+            return desdeReddit();
         }
     }
 
-    /** Posts destacados de la semana en Reddit r/tattoos; devuelve lista vacía si también falla. */
-    @SuppressWarnings("unchecked")
-    private List<NewsArticleDto> getFallbackNews() {
+    private List<NewsArticleDto> desdeReddit() {
         try {
-            Map<?, ?> response = webClientBuilder.build()
-                    .get()
-                    .uri("https://www.reddit.com/r/tattoos/top.json?limit=20&t=week")
+            RespuestaReddit respuesta = http.get().uri(REDDIT)
                     .header("User-Agent", "LinkedApp/1.0")
                     .retrieve()
-                    .bodyToMono(Map.class)
-                    .block();
-
-            if (response == null) return List.of();
-
-            Map<?, ?> data = (Map<?, ?>) response.get("data");
-            if (data == null) return List.of();
-
-            List<Map<?, ?>> children = (List<Map<?, ?>>) data.get("children");
-            if (children == null) return List.of();
-
-            return children.stream()
-                    .map(child -> {
-                        Map<?, ?> post = (Map<?, ?>) child.get("data");
-                        return new NewsArticleDto(
-                                (String) post.get("title"),
-                                "https://www.reddit.com" + post.get("permalink"),
-                                (String) post.get("selftext"),
-                                null,
-                                "Reddit r/tattoos"
-                        );
-                    })
-                    .filter(dto -> dto.title() != null)
+                    .body(RespuestaReddit.class);
+            if (respuesta == null || respuesta.data() == null || respuesta.data().children() == null) {
+                return List.of();
+            }
+            return respuesta.data().children().stream()
+                    .map(RespuestaReddit.Hijo::data)
+                    .filter(Objects::nonNull)
+                    .filter(post -> post.title() != null)
+                    .map(post -> new NewsArticleDto(post.title(), "https://www.reddit.com" + post.permalink(),
+                            post.selftext(), null, "Reddit r/tattoos"))
                     .toList();
-
-        } catch (Exception e) {
-            log.warn("Reddit fallback also failed: {}", e.getMessage());
+        } catch (RestClientException ex) {
+            log.warn("Reddit tampoco respondió: {}", ex.getMessage());
             return List.of();
+        }
+    }
+
+    record RespuestaNewsApi(String status, List<Articulo> articles) {
+
+        record Articulo(String title, String url, String description, String publishedAt, Fuente source) {
+        }
+
+        record Fuente(String name) {
+        }
+    }
+
+    record RespuestaReddit(Datos data) {
+
+        record Datos(List<Hijo> children) {
+        }
+
+        record Hijo(Post data) {
+        }
+
+        record Post(String title, String permalink, String selftext) {
         }
     }
 }

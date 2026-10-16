@@ -1,5 +1,6 @@
 package com.linked.model.entity;
 
+import com.dmc00.core.swe.model.entity.SweUsrapl;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

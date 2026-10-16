@@ -1,8 +1,9 @@
 package com.linked.controller;
 
-import com.linked.dto.ApiResponse;
+import com.dmc00.core.swe.model.entity.SweUsrapl;
+import com.dmc00.core.web.ApiResponse;
 import com.linked.dto.SupportTicketDto;
-import com.linked.model.entity.SweUsrapl;
+import com.linked.security.Permisos;
 import com.linked.service.SupportTicketService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,6 +31,7 @@ public class SupportTicketController {
     private final SupportTicketService ticketService;
 
     @GetMapping("/me/tickets")
+    @PreAuthorize(Permisos.AUTENTICADO)
     @Operation(summary = "Mis tickets de soporte")
     public ResponseEntity<ApiResponse<List<SupportTicketDto.Response>>> myTickets(
             @AuthenticationPrincipal SweUsrapl currentUser) {
@@ -38,20 +40,21 @@ public class SupportTicketController {
     }
 
     @GetMapping("/findall")
-    @PreAuthorize("hasAnyRole('Administrador','Moderador')")
+    @PreAuthorize(Permisos.ADMINISTRADOR_O_MODERADOR)
     @Operation(summary = "Listar todos los tickets")
     public ResponseEntity<ApiResponse<List<SupportTicketDto.Response>>> findAll() {
         return ResponseEntity.ok(ApiResponse.ok(ticketService.findAll()));
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('Administrador','Moderador')")
+    @PreAuthorize(Permisos.ADMINISTRADOR_O_MODERADOR)
     @Operation(summary = "Obtener ticket por ID")
     public ResponseEntity<ApiResponse<SupportTicketDto.Response>> findById(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.ok(ticketService.findById(id)));
     }
 
     @PostMapping("/create")
+    @PreAuthorize(Permisos.PUBLICO)
     @Operation(summary = "Crear ticket de soporte")
     public ResponseEntity<ApiResponse<SupportTicketDto.Response>> create(
             @Valid @RequestBody SupportTicketDto.CreateRequest request,
@@ -63,7 +66,7 @@ public class SupportTicketController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('Administrador','Moderador')")
+    @PreAuthorize(Permisos.ADMINISTRADOR_O_MODERADOR)
     @Operation(summary = "Actualizar ticket")
     public ResponseEntity<ApiResponse<SupportTicketDto.Response>> update(
             @PathVariable Long id,
@@ -72,7 +75,7 @@ public class SupportTicketController {
     }
 
     @PostMapping("/{id}/respond")
-    @PreAuthorize("hasAnyRole('Administrador','Moderador')")
+    @PreAuthorize(Permisos.ADMINISTRADOR_O_MODERADOR)
     @Operation(summary = "Responder a un ticket")
     public ResponseEntity<ApiResponse<Void>> respond(
             @PathVariable Long id,
@@ -82,7 +85,7 @@ public class SupportTicketController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('Administrador','Moderador')")
+    @PreAuthorize(Permisos.ADMINISTRADOR_O_MODERADOR)
     @Operation(summary = "Eliminar ticket")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
         ticketService.delete(id);

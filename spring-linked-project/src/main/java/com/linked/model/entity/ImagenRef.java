@@ -1,6 +1,6 @@
 package com.linked.model.entity;
 
-import com.core.model.entity.BaseEntity;
+import com.dmc00.core.data.BaseEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

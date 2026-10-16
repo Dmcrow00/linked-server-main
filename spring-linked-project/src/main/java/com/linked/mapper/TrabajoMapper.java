@@ -1,27 +1,30 @@
 package com.linked.mapper;
 
 import com.linked.dto.TrabajoDto;
+import com.linked.model.entity.PerfilUsuario;
 import com.linked.model.entity.Trabajo;
-import org.mapstruct.*;
+import com.linked.model.entity.TrabajoFoto;
+import org.mapstruct.Context;
+import org.mapstruct.InjectionStrategy;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
-import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-/**
- * Convierte trabajos a DTO. {@code likedByMe} sale siempre en {@code false}: lo completa
- * {@code TrabajosServiceImpl} según el usuario autenticado.
- */
-@Mapper(componentModel = "spring",
-        uses = {SweUsrMapper.class},
-        nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+/** Convierte trabajos a DTO con la vista pública del tatuador. */
+@Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR, uses = {UsuarioMapper.class, FormatoDeFechas.class})
 public interface TrabajoMapper {
 
-    @Mapping(target = "fotos", expression = "java(t.getFotos().stream().map(f -> f.getImagePath()).toList())")
-    @Mapping(target = "tatuador", source = "tatuador")
+    /**
+     * @param perfiles  perfiles de los tatuadores (de ahí sale el estudio)
+     * @param meGustan  ids de los trabajos que le gustan a quien consulta; vacío sin sesión
+     */
     @Mapping(target = "likesCount", expression = "java(t.getFavoritos().size())")
-    @Mapping(target = "likedByMe", constant = "false")
-    @Mapping(target = "creationTimestamp",
-             expression = "java(t.getCreationTimestamp() != null ? t.getCreationTimestamp().format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null)")
-    TrabajoDto.Response toResponse(Trabajo t);
+    @Mapping(target = "likedByMe", expression = "java(meGustan.contains(t.getId()))")
+    TrabajoDto.Response toResponse(Trabajo t, @Context Map<Long, PerfilUsuario> perfiles, @Context Set<Long> meGustan);
 
-    List<TrabajoDto.Response> toResponseList(List<Trabajo> list);
+    default String ruta(TrabajoFoto foto) {
+        return foto.getImagePath();
+    }
 }

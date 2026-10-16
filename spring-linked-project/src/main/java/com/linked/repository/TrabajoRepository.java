@@ -5,10 +5,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 import java.util.List;
-import java.util.Optional;
 
 /** Acceso a trabajos del portfolio ({@link Trabajo}). */
 public interface TrabajoRepository extends JpaRepository<Trabajo, Long> {
@@ -19,7 +17,8 @@ public interface TrabajoRepository extends JpaRepository<Trabajo, Long> {
     @Query("SELECT t FROM Trabajo t WHERE t.status = 'true' ORDER BY t.creationTimestamp DESC")
     Page<Trabajo> findAllActive(Pageable pageable);
 
-    Optional<Trabajo> findByInstagramMediaId(String instagramMediaId);
+    /** Trabajos importados de Instagram que siguen publicados; la sincronización da de baja los borrados allá. */
+    List<Trabajo> findByTatuador_IdAndInstagramMediaIdIsNotNullAndStatus(Long tatuadorId, String status);
 
     /** Lo usa la sincronización con Instagram para no importar dos veces el mismo post. */
     boolean existsByInstagramMediaId(String instagramMediaId);

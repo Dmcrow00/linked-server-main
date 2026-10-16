@@ -1,24 +1,23 @@
 package com.linked.mapper;
 
+import com.dmc00.core.swe.model.entity.SweUsrapl;
 import com.linked.dto.SupportTicketDto;
 import com.linked.model.entity.SupportTicket;
-import org.mapstruct.*;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
 import java.util.List;
 
 /** Convierte tickets a DTO; {@code status} indica si el ticket está abierto ({@code ticketOpen}). */
-@Mapper(componentModel = "spring",
-        nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+@Mapper(componentModel = "spring", uses = FormatoDeFechas.class)
 public interface SupportTicketMapper {
 
-    @Mapping(target = "status", expression = "java(st.isTicketOpen())")
-    @Mapping(target = "usuarios",
-             expression = "java(st.getUsuarios().stream().map(u -> u.getUsername()).toList())")
-    @Mapping(target = "creationTimestamp",
-             expression = "java(st.getCreationTimestamp() != null ? st.getCreationTimestamp().format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null)")
-    @Mapping(target = "modificationTimestamp",
-             expression = "java(st.getModificationTimestamp() != null ? st.getModificationTimestamp().format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null)")
+    @Mapping(target = "status", source = "ticketOpen")
     SupportTicketDto.Response toResponse(SupportTicket st);
 
     List<SupportTicketDto.Response> toResponseList(List<SupportTicket> list);
+
+    default String username(SweUsrapl usuario) {
+        return usuario.getUsername();
+    }
 }

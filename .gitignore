@@ -46,6 +46,8 @@ src/shared/pg-database/.env
 *.tsbuildinfo
 
 # Clave RSA de dev del backend Spring - cada entorno genera/inyecta la suya
+# (rsa-privada.pem la genera core-security; rsa-keypair.ser es el formato anterior)
+**/rsa-privada.pem
 **/rsa-keypair.ser
 
 # Maven (spring-linked-project/)

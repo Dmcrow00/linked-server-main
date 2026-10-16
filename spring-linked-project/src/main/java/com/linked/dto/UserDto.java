@@ -1,5 +1,6 @@
 package com.linked.dto;
 
+import com.dmc00.core.swe.dto.SweRolDto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.*;
 

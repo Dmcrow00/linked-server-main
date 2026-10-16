@@ -1,14 +1,20 @@
 package com.linked.service;
 
-import com.linked.dto.AuthDto;
+import com.dmc00.core.swe.dto.AuthDto;
+import com.dmc00.core.swe.dto.SweRolDto;
+import com.linked.dto.EspecialidadDto;
 import com.linked.dto.UserDto;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
-/** Alta, perfil, roles, especialidades y recuperación de contraseña de usuarios. */
+/**
+ * Usuarios de linked: la cuenta la maneja core-swe ({@code SweUsrService}); este servicio agrega
+ * el perfil propio de la app, el registro de tatuadores y los mails.
+ */
 public interface UserService {
 
+    /** Todos los usuarios, también los dados de baja (pantalla de administración). */
     List<UserDto.Response> findAll();
 
     List<UserDto.Response> findAllTatuadores();
@@ -27,25 +33,37 @@ public interface UserService {
     /** Perfil público de un tatuador para su portfolio; no requiere sesión. */
     UserDto.PerfilPublico findPerfilPublico(Long id);
 
+    /** Actualización parcial: los campos {@code null} no se modifican. */
     UserDto.Response update(Long id, UserDto.UpdateRequest request);
 
-    /** Sube la foto a Cloudinary y guarda su URL en el perfil. */
+    /**
+     * Sube la foto a Cloudinary y guarda su URL. Si el usuario vinculó Instagram la foto es la de
+     * Instagram y no se puede cambiar a mano (403).
+     */
     UserDto.Response updateProfilePhoto(Long id, MultipartFile file);
 
     /** Reemplaza todos los roles del usuario por los indicados. */
     void updateRoles(Long id, UserDto.UpdateRolesRequest request);
 
-    /** Reemplaza las especialidades del tatuador; los IDs inexistentes se ignoran. */
+    List<SweRolDto.Response> findAllRoles();
+
+    /** Ids de los roles vigentes del usuario. */
+    List<Long> findRoleIdsByUser(Long userId);
+
+    SweRolDto.Response findRoleById(Long roleId);
+
+    List<EspecialidadDto.Response> findEspecialidades(Long tatuadorId);
+
+    /** Reemplaza las especialidades del tatuador; los ids inexistentes se ignoran. */
     void assignEspecialidades(Long tatuadorId, List<Long> especialidadIds);
 
     void removeEspecialidad(Long tatuadorId, Long especialidadId);
 
-    /** Genera un token de recuperación válido por 1 hora y lo envía por email. */
+    /** Si el email existe, manda el enlace de recuperación; si no, no hace nada (no se informa). */
     void forgotPassword(UserDto.ForgotPasswordRequest request);
 
-    /** Cambia la contraseña si el token existe y no venció; después el token queda invalidado. */
     void resetPassword(UserDto.ResetPasswordRequest request);
 
-    /** Baja lógica: registra la fecha de baja y deshabilita al usuario, que ya no puede iniciar sesión. */
+    /** Baja lógica: el usuario ya no puede iniciar sesión. */
     void delete(Long id);
 }

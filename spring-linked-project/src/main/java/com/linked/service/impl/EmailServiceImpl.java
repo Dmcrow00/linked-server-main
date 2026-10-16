@@ -1,10 +1,12 @@
 package com.linked.service.impl;
 
+import com.dmc00.core.swe.dto.SweUsrDto;
+import com.linked.service.EmailService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -12,49 +14,50 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
-/**
- * Envío de emails transaccionales con plantillas Thymeleaf ({@code templates/email}).
- * <p>
- * Los envíos son asíncronos: si falla el servidor de correo se registra en el log, pero no
- * se interrumpe la operación que originó el email.
- */
+import java.time.Duration;
+
+/** Implementación de {@link EmailService} con plantillas Thymeleaf ({@code templates/email}). */
 @Slf4j
 @Service
-@RequiredArgsConstructor
-public class EmailServiceImpl {
+public class EmailServiceImpl implements EmailService {
 
     private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
+    private final String remitente;
+    private final String urlDelCliente;
+    private final Duration vigenciaRecuperacion;
 
-    @Value("${app.mail.from:noreply@linked-app.com}")
-    private String fromAddress;
+    public EmailServiceImpl(JavaMailSender mailSender, TemplateEngine templateEngine,
+                            @Value("${app.mail.from:noreply@linked-app.com}") String remitente,
+                            @Value("${app.frontend.base-url:http://localhost:4200}") String urlDelCliente,
+                            @Value("${app.swe.vigencia-recuperacion:1h}") Duration vigenciaRecuperacion) {
+        this.mailSender = mailSender;
+        this.templateEngine = templateEngine;
+        this.remitente = remitente;
+        this.urlDelCliente = urlDelCliente;
+        this.vigenciaRecuperacion = vigenciaRecuperacion;
+    }
 
-    @Value("${app.frontend.base-url:http://localhost:4200}")
-    private String frontendBaseUrl;
-
-    /** Envía el enlace de recuperación, que apunta a la pantalla {@code /reset-password} del cliente web. */
+    @Override
     @Async
-    public void sendPasswordResetEmail(String toEmail, String username, String resetToken) {
+    public void enviarRecuperacionDeContrasena(SweUsrDto.PasswordReset recuperacion) {
         try {
             Context ctx = new Context();
-            ctx.setVariable("username", username);
-            ctx.setVariable("resetUrl", frontendBaseUrl + "/reset-password?token=" + resetToken);
-            // Debe coincidir con el vencimiento que fija UserServiceImpl#forgotPassword.
-            ctx.setVariable("expirationHours", 1);
-
+            ctx.setVariable("username", recuperacion.username());
+            ctx.setVariable("resetUrl", urlDelCliente + "/reset-password?token=" + recuperacion.token());
+            ctx.setVariable("expirationHours", Math.max(1, vigenciaRecuperacion.toHours()));
             String html = templateEngine.process("email/password-reset", ctx);
 
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom(fromAddress);
-            helper.setTo(toEmail);
+            helper.setFrom(remitente);
+            helper.setTo(recuperacion.email());
             helper.setSubject("Restablecer contraseña - LINKED");
             helper.setText(html, true);
-
             mailSender.send(message);
-            log.info("Password reset email sent to {}", toEmail);
-        } catch (MessagingException e) {
-            log.error("Failed to send password reset email to {}: {}", toEmail, e.getMessage());
+            log.info("Mail de recuperación de contraseña enviado a {}", recuperacion.username());
+        } catch (MessagingException | MailException ex) {
+            log.error("No se pudo mandar el mail de recuperación a {}: {}", recuperacion.username(), ex.getMessage());
         }
     }
 }

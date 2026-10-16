@@ -1,12 +1,12 @@
 package com.linked.service.impl;
 
+import com.dmc00.core.swe.repository.SweUsrRepository;
 import com.linked.dto.HorarioHabitualDto;
 import com.linked.dto.SlotDto;
 import com.linked.mapper.HorarioHabitualMapper;
 import com.linked.model.entity.HorarioHabitual;
 import com.linked.model.entity.TurnoTatuador;
 import com.linked.repository.HorarioHabitualRepository;
-import com.linked.repository.SweUsrRepository;
 import com.linked.repository.TurnoTatuadorRepository;
 import com.linked.service.AgendaService;
 import lombok.RequiredArgsConstructor;

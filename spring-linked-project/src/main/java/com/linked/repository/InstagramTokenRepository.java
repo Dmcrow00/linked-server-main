@@ -3,9 +3,7 @@ package com.linked.repository;
 import com.linked.model.entity.InstagramToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,7 +14,7 @@ public interface InstagramTokenRepository extends JpaRepository<InstagramToken, 
 
     void deleteByTatuador_Id(Long tatuadorId);
 
-    /** Tokens que vencen antes de la fecha indicada; los usa la renovación programada. */
-    @Query("SELECT t FROM InstagramToken t WHERE t.tokenExpiresAt < :threshold")
-    List<InstagramToken> findExpiringBefore(@Param("threshold") LocalDateTime threshold);
+    /** Tatuadores con cuenta vinculada; los recorre la sincronización programada. */
+    @Query("SELECT t.tatuador.id FROM InstagramToken t ORDER BY t.tatuador.id")
+    List<Long> findIdsDeTatuadores();
 }

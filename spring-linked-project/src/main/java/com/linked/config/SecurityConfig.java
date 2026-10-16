@@ -1,139 +1,54 @@
 package com.linked.config;
 
-import com.linked.dto.ApiResponse;
-import com.linked.security.JwtAuthenticationFilter;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
+import com.dmc00.core.security.JwtAuthenticationFilter;
+import com.dmc00.core.security.JwtService;
+import com.dmc00.core.security.SeguridadHttpComun;
+import com.linked.security.JwtConTokenEnInicioDeOAuth;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfigurationSource;
-
-import java.nio.charset.StandardCharsets;
 
 /**
- * Seguridad HTTP de la API: autenticación sin estado con JWT y reglas de acceso por URL.
- * <p>
- * Acá se definen los endpoints públicos y las reglas generales; los permisos por rol de cada
- * operación están en los controllers con {@code @PreAuthorize}. Los errores 401 y 403 se
- * devuelven con el mismo formato {@code ApiResponse} que el resto de la API.
+ * Seguridad HTTP de la API. Lo común (sin sesión, CORS, JWT, 401/403 en JSON, contraseñas) lo
+ * pone core-security; acá solo se separa lo público de lo que exige sesión. El permiso fino de
+ * cada endpoint está en su {@code @PreAuthorize} ({@link com.linked.security.Permisos}).
  */
 @Configuration
-@EnableWebSecurity
-@EnableMethodSecurity
-@RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthFilter;
-    private final UserDetailsService userDetailsService;
-    private final CorsConfigurationSource corsConfigurationSource;
+    /** El filtro de core-security, con el token por query solo en el inicio del OAuth de Instagram. */
+    @Bean
+    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtService jwtService, UserDetailsService usuarios) {
+        return new JwtConTokenEnInicioDeOAuth(jwtService, usuarios);
+    }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-            // Sin sesión ni cookies: el JWT viaja en el header, por lo que CSRF no aplica.
-            .csrf(AbstractHttpConfigurer::disable)
-            .cors(cors -> cors.configurationSource(corsConfigurationSource))
-            .sessionManagement(session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                // ── Públicos ──────────────────────────────────────────────────
+    public SecurityFilterChain seguridad(HttpSecurity http, SeguridadHttpComun comun) throws Exception {
+        comun.aplicar(http).authorizeHttpRequests(auth -> auth
+                // ── Login, clave pública y disponibilidad (core-swe) ──────────
                 .requestMatchers("/api/auth/**").permitAll()
+                // ── Páginas legales, callback de Instagram y operación ────────
                 .requestMatchers("/api/legal/**").permitAll()
                 .requestMatchers("/api/instagram/callback").permitAll()
                 .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/api-docs/**").permitAll()
-                .requestMatchers("/actuator/health").permitAll()
-                // ── Registro de usuarios ─────────────────────────────────────
-                .requestMatchers(HttpMethod.POST, "/api/users/register").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/users/register-tatuador").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/users/forgot-password").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/users/reset-password").permitAll()
-                // ── Feed y news públicos ──────────────────────────────────────
-                .requestMatchers(HttpMethod.GET, "/api/trabajos/feed").permitAll()
-                // ── Portfolio público de un tatuador ──────────────────────────
-                // Los trabajos ya viajan con la vista pública del autor, y el perfil que
-                // alimenta la cabecera no lleva datos personales ni de contacto.
-                .requestMatchers(HttpMethod.GET, "/api/trabajos/tatuador/*").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/users/*/publico").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/news/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/especialidades/**").permitAll()
-                // ── Búsqueda pública ──────────────────────────────────────────
-                .requestMatchers(HttpMethod.GET,  "/api/busqueda/tatuadores-ubicacion").permitAll()
+                .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
+                // ── Registro y recuperación de contraseña ─────────────────────
+                .requestMatchers(HttpMethod.POST,
+                        "/api/users/register", "/api/users/register-tatuador",
+                        "/api/users/forgot-password", "/api/users/reset-password").permitAll()
+                // ── Feed, portfolio, noticias, especialidades y búsqueda ──────
+                .requestMatchers(HttpMethod.GET,
+                        "/api/trabajos/feed", "/api/trabajos/tatuador/*", "/api/users/*/publico",
+                        "/api/news", "/api/news/**", "/api/especialidades", "/api/especialidades/**",
+                        "/api/busqueda/tatuadores-ubicacion").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/busqueda/por-estilo").permitAll()
                 // ── Soporte: se puede reportar un problema sin iniciar sesión ──
                 .requestMatchers(HttpMethod.POST, "/api/supportTicket/create").permitAll()
-                // ── Menú lateral ──────────────────────────────────────────────
-                // Lo consume cualquier usuario autenticado; el servicio devuelve solo los
-                // ítems habilitados para sus roles. La administración sigue siendo exclusiva.
-                .requestMatchers(HttpMethod.GET, "/api/swe/menu").authenticated()
-                // ── Solo Administrador ────────────────────────────────────────
-                .requestMatchers("/api/swe/**").hasRole("Administrador")
-                .requestMatchers("/api/solicitudes-tatuador/**").hasRole("Administrador")
-                // ── Administrador o Moderador ─────────────────────────────────
-                .requestMatchers("/api/supportTicket/findall").hasAnyRole("Administrador", "Moderador")
-                .requestMatchers(HttpMethod.POST, "/api/supportTicket/*/respond").hasAnyRole("Administrador", "Moderador")
-                // ── El resto requiere autenticación ───────────────────────────
-                .anyRequest().authenticated()
-            )
-            .exceptionHandling(ex -> ex
-                .authenticationEntryPoint((request, response, authException) ->
-                    writeJsonError(response, HttpServletResponse.SC_UNAUTHORIZED,
-                        "No autenticado. Incluya un token JWT valido."))
-                .accessDeniedHandler((request, response, accessDeniedException) ->
-                    writeJsonError(response, HttpServletResponse.SC_FORBIDDEN,
-                        "Acceso denegado. No tiene permisos suficientes."))
-            )
-            .authenticationProvider(authenticationProvider())
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
-
+                // ── El resto exige sesión; el rol lo decide cada @PreAuthorize ─
+                .anyRequest().authenticated());
         return http.build();
-    }
-
-    @Bean
-    public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-        provider.setUserDetailsService(userDetailsService);
-        provider.setPasswordEncoder(passwordEncoder());
-        return provider;
-    }
-
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(10);
-    }
-
-    // Se escribe a mano porque estos errores ocurren en la cadena de filtros, antes de llegar
-    // a los controllers y, por lo tanto, fuera del alcance de GlobalExceptionHandler.
-    private void writeJsonError(HttpServletResponse response, int status, String message) {
-        try {
-            response.setStatus(status);
-            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-            response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.registerModule(new JavaTimeModule());
-            response.getWriter().write(mapper.writeValueAsString(ApiResponse.error(message)));
-        } catch (Exception ignored) {}
     }
 }

@@ -1,21 +1,24 @@
 package com.linked.mapper;
 
 import com.linked.dto.SolicitudTatuadorDto;
+import com.linked.model.entity.PerfilUsuario;
 import com.linked.model.entity.SolicitudTatuador;
-import org.mapstruct.*;
+import org.mapstruct.Context;
+import org.mapstruct.InjectionStrategy;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
 import java.util.List;
+import java.util.Map;
 
 /** Convierte solicitudes de tatuador a DTO; {@code status} expone el estado del trámite, no la baja lógica. */
-@Mapper(componentModel = "spring",
-        uses = {SweUsrMapper.class},
-        nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+@Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR, uses = {UsuarioMapper.class, FormatoDeFechas.class})
 public interface SolicitudTatuadorMapper {
 
-    @Mapping(target = "status", expression = "java(s.getSolicitudStatus() != null ? s.getSolicitudStatus().name() : null)")
-    @Mapping(target = "creationTimestamp",
-             expression = "java(s.getCreationTimestamp() != null ? s.getCreationTimestamp().format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null)")
-    SolicitudTatuadorDto.Response toResponse(SolicitudTatuador s);
+    /** @param perfiles perfiles de los solicitantes */
+    @Mapping(target = "status", source = "solicitudStatus")
+    SolicitudTatuadorDto.Response toResponse(SolicitudTatuador s, @Context Map<Long, PerfilUsuario> perfiles);
 
-    List<SolicitudTatuadorDto.Response> toResponseList(List<SolicitudTatuador> list);
+    List<SolicitudTatuadorDto.Response> toResponseList(List<SolicitudTatuador> list,
+                                                       @Context Map<Long, PerfilUsuario> perfiles);
 }

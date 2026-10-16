@@ -1,6 +1,7 @@
 package com.linked.model.entity;
 
-import com.core.model.entity.BaseEntity;
+import com.dmc00.core.data.BaseEntity;
+import com.dmc00.core.swe.model.entity.SweUsrapl;
 import com.linked.model.enums.SolicitudStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
