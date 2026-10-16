@@ -20,8 +20,9 @@ Capas: `controller` (HTTP y permiso de cada endpoint) → `service` (interfaz) /
 transacciones) → `repository`. Lo externo va por puertos en `integration` (`InstagramApi`,
 `AlmacenDeImagenes`) y las tareas en segundo plano en `job`. Diagramas en [diagramas/](diagramas/).
 
-`nodejs-legacy/` es la versión anterior (Node 20, Express, TypeORM). Sigue en `main` hasta que se retire;
-qué quedó de cada endpoint: [paridad-con-node.md](paridad-con-node.md).
+La versión anterior (Node 20, Express, TypeORM, carpeta `nodejs-legacy/`) se retiró del repositorio; sigue
+en el historial de git y en `main` hasta que se publique esta. Qué quedó de cada endpoint:
+[paridad-con-node.md](paridad-con-node.md).
 
 ## 2. Módulos
 
@@ -88,8 +89,7 @@ qué quedó de cada endpoint: [paridad-con-node.md](paridad-con-node.md).
 Checklist de `backend-java.md` §11: migración Flyway nueva (nunca editar una aplicada), entidad que
 extiende `BaseEntity`, repositorio, `XxxDto` con records y validaciones, `XxxService` + `XxxServiceImpl`
 (`@Transactional(readOnly = true)` en la clase), mapper de MapStruct, controller con `@PreAuthorize` en
-cada método, tests (unitario del servicio y un `*IT` del endpoint), DER, clases, paridad si reemplaza algo
-de Node, y CHANGELOG.
+cada método, tests (unitario del servicio y un `*IT` del endpoint), DER, clases y CHANGELOG.
 
 ## 4. Tests
 

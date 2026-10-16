@@ -1,7 +1,11 @@
 # Paridad con el backend Node
 
-Para: quien decide retirar `nodejs-legacy/` y quien mantiene el cliente web. Responde, endpoint por
-endpoint, dónde quedó cada funcionalidad del backend Node en Spring y qué cambió.
+Para: quien mantiene el cliente web y quien pasa la base de producción de Node a Spring. Responde, endpoint
+por endpoint, dónde quedó cada funcionalidad del backend Node en Spring y qué cambió.
+
+El backend Node (`nodejs-legacy/`) se retiró del repositorio el 2026-10-16, con esta tabla verificada
+contra su código (cada método y ruta de `src/controllers` tiene su fila). El código sigue en el historial de
+git y en `main` hasta que se publique la versión Spring.
 
 Relevado el 2026-10-15 sobre `nodejs-legacy/src/controllers` (68 endpoints) y `spring-linked-project`.
 Cada fila está cubierta por la versión Spring; la columna **Cambio** dice si el contrato o el permiso es
@@ -158,10 +162,16 @@ Cambios generales que el cliente ya absorbió (linked-client-main, rama de traba
 `GET /api/users/{id}/publico` (perfil público del tatuador), `GET /api/busqueda/tatuadores-ubicacion`,
 `POST /api/busqueda/por-estilo` (detección de estilo con IA pendiente) y `GET /api/swe/menu/todos`.
 
-## Para retirar `nodejs-legacy/`
+## Retiro
 
-1. Mergear este cambio en `develop` y desplegarlo (la versión Node sigue en `main`).
-2. Con la base de producción de Node: hacer un respaldo, apuntar la versión Spring a esa base (Flyway la
+Hecho (2026-10-16): la carpeta `nodejs-legacy/` y su configuración (`.renderignore`, `.nvmrc`, la
+configuración de depuración de Node en `.vscode/launch.json`) salieron del repositorio en un PR propio. La
+carpeta queda ignorada por git para que una copia local (con `node_modules` o imágenes de `uploads`) no se
+vuelva a versionar.
+
+Falta, a cargo del dueño:
+
+1. Con la base de producción de Node: hacer un respaldo, apuntar la versión Spring a esa base (Flyway la
    toma como V1 por `baseline-on-migrate`) y revisar `tat_ruta_local_retirada` después de la V20.
-3. Probar el cliente web contra Spring (login de un usuario de Node, reservas, Instagram).
-4. Llevar `develop` a `main` y borrar `nodejs-legacy/` en un PR aparte.
+2. Probar el cliente web contra Spring (login de un usuario de Node, reservas, Instagram).
+3. Llevar `develop` a `main` y apagar el servicio donde corra la versión Node, si hay uno.

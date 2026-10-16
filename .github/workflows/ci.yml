@@ -3,7 +3,7 @@
 #
 # En cada push y PR a develop y main: instala dmc00-parent y dmc00-core en el repositorio Maven local,
 # compila y corre unitarios + integración. Los *IT usan PostgreSQL en Testcontainers: el runner ya trae
-# Docker. nodejs-legacy/ (la versión Node, en main hasta que se retire) no se compila acá.
+# Docker.
 #
 # Secret necesario mientras dmc00-parent y dmc00-core sean privados (Settings -> Secrets and variables ->
 # Actions): CROSS_REPO_PAT, token con permiso de lectura sobre Dmcrow00/dmc00-parent y Dmcrow00/dmc00-core.

@@ -1,65 +1,42 @@
-# coverage reports
-coverage
-
-# API keys and secrets
-
-.claude/
+# Variables locales: .env no se versiona; la plantilla del backend sí (sin valores reales)
+*.env
 .env.example
-
-# Excepcion: el .env.example de spring-linked-project es una plantilla sin
-# valores reales - documenta que variables hacen falta en el .env local
 !spring-linked-project/.env.example
 
-#env variables file 
-*.env
+# Configuración local de Claude Code
+.claude/
 
-#cryptoConfig
-src/middleware/auth/criptoConfig
+# Clave RSA de dev del backend - cada entorno genera/inyecta la suya
+# (rsa-privada.pem la genera core-security; rsa-keypair.ser es el formato anterior)
+**/rsa-privada.pem
+**/rsa-keypair.ser
 
-# dependency directory
-node_modules
+# Maven
+target/
+*.class
 
-# OS metadata
-.DS_Store
-Thumbs.db
+# Backend Node retirado: si quedó una copia local (node_modules, uploads con imágenes de usuarios),
+# que no se vuelva a versionar
+nodejs-legacy/
 
-# ignore built ts files
-dist/**/*
+# Eclipse / Spring Tools / IntelliJ
+.classpath
+.project
+.factorypath
+.settings/
+.idea/
+*.iml
 
-# vscode
+# VS Code: se versiona solo la configuración compartida
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
-!.vscode/*.code-snippets
-
-## local jistory for vscode
 .history/
-
-## built vscode extensions
 *.vsix
-src/shared/pg-database/.env
 
-##Build
-*.tsbuildinfo
-
-# Clave RSA de dev del backend Spring - cada entorno genera/inyecta la suya
-# (rsa-privada.pem la genera core-security; rsa-keypair.ser es el formato anterior)
-**/rsa-privada.pem
-**/rsa-keypair.ser
-
-# Maven (spring-linked-project/)
-target/
-*.class
-
-# Eclipse / Spring Tools (spring-linked-project/)
-.classpath
-.project
-.factorypath
-.settings/
-
-# Imágenes subidas por usuarios al backend Node (fotos de perfil, trabajos,
-# referencias de turnos): son datos personales y no van al repo público.
-# Respaldo local en D:\Desarrollo\dmc00-backups\linked-uploads-20261015.
-nodejs-legacy/uploads/
+# Reportes y metadatos del sistema
+coverage
+.DS_Store
+Thumbs.db

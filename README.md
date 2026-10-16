@@ -4,10 +4,9 @@ Backend de **LINKED**, la plataforma que conecta clientes con estudios de tatuaj
 importado de Instagram), búsqueda por zona, agenda, turnos con chat y soporte. Lo consume el cliente web
 `linked-client-main` (Angular).
 
-| Carpeta | Qué es |
-|---|---|
-| `spring-linked-project/` | el backend: Java 25, Spring Boot 4.1, PostgreSQL, Flyway, `dmc00-core` |
-| `nodejs-legacy/` | la versión anterior en Node (sigue en `main` hasta que se retire; ver [docs/paridad-con-node.md](docs/paridad-con-node.md)) |
+El backend está en `spring-linked-project/` (Java 25, Spring Boot 4.1, PostgreSQL, Flyway, `dmc00-core`).
+La versión anterior en Node (`nodejs-legacy/`) se retiró: sigue en el historial de git y en `main` hasta
+que se publique esta versión. Qué quedó de cada endpoint: [docs/paridad-con-node.md](docs/paridad-con-node.md).
 
 ## Cómo correrlo
 

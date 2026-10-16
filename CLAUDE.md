@@ -7,7 +7,6 @@ Backend de LINKED (estudios de tatuajes). Reglas generales en `dmc00-workspace/C
 
 ```
 spring-linked-project/   backend: Java 25, Spring Boot 4.1, dmc00-parent + dmc00-core
-nodejs-legacy/           versión Node anterior: NO se modifica; se retira (docs/paridad-con-node.md)
 docs/                    técnica, funcional, entorno, paridad con Node, diagramas, ADR
 ```
 
@@ -32,11 +31,12 @@ cd spring-linked-project
   dobles de `soporte/DoblesDePrueba`. Ningún test sale a la red.
 - Migraciones: nunca editar una aplicada (ver ADR-0002 por qué V1 y V11 quedaron como están); carpeta
   `db/migration/linked`.
-- Un cambio en un endpoint actualiza `docs/paridad-con-node.md` mientras exista `nodejs-legacy/`.
+- La versión Node (`nodejs-legacy/`) se retiró y no vuelve: está en el historial de git y en `main` hasta
+  que se publique la versión Spring. `docs/paridad-con-node.md` queda como registro de la migración.
 
 ## Reglas git
 
 Claude NO ejecuta comandos git de escritura sin instrucción explícita del usuario en ese turno (regla de
 este repo, más restrictiva que ADR-0004 del workspace; el dueño decide si pasa a la política común).
 Con instrucción: ramas `r.ceballos/<TIPO>_<camelCase>` desde `develop`, PR contra `develop`, nunca merge ni
-tags. `main` sigue siendo la versión Node.
+tags. `main` sigue siendo la versión Node hasta que el dueño lleve `develop` a `main`.

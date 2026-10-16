@@ -2,7 +2,7 @@
 
 Formato [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versionado
 [SemVer](https://semver.org/lang/es/). Cubre el backend Spring (`spring-linked-project/`); la versión
-Node (`nodejs-legacy/`) no tiene historial de versiones.
+Node, ya retirada, no tenía historial de versiones.
 
 ## [Sin publicar]
 
@@ -53,6 +53,8 @@ Node (`nodejs-legacy/`) no tiene historial de versiones.
 
 ### Eliminado
 
+- El backend Node (`nodejs-legacy/`), con `.renderignore` y `.nvmrc`: todo lo que hacía está cubierto
+  (docs/paridad-con-node.md). `.vscode/launch.json` ahora arranca la API Spring en el perfil dev.
 - Copias de `ApiResponse`, `PageResponse`, `AppExceptions`, `GlobalExceptionHandler`, `JwtService`,
   `JwtAuthenticationFilter`, `RsaDecryptionService`, `RsaKeyConfig`, `CorsConfig`, `RecaptchaServiceImpl`,
   `JpaAuditingConfig`, entidades y repositorios `Swe*`, `AuthController`, `SweItemmenu*`, y las clases muertas
