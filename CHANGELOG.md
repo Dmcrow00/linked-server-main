@@ -62,6 +62,8 @@ Node (`nodejs-legacy/`) no tiene historial de versiones.
 
 ### Seguridad
 
+- Jackson 2.21.7 y 3.1.7 y Tomcat 11.0.27 en lugar de los de Spring Boot 4.1.1, que tienen vulnerabilidades
+  altas y críticas (fijadas en el `pom.xml` hasta que el arreglo de dmc00-parent llegue a `develop`).
 - V18: el admin semilla queda sin contraseña utilizable (los hashes que sembró V1 eran conocidos y uno es de
   una contraseña publicada en este repositorio) (ADR-0003).
 - El `state` del OAuth de Instagram ya no puede usarse como token de sesión.
