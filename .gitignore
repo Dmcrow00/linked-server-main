@@ -45,6 +45,11 @@ src/shared/pg-database/.env
 ##Build
 *.tsbuildinfo
 
+# Imágenes subidas por usuarios al backend Node (fotos de perfil, trabajos,
+# referencias de turnos): son datos personales y no van al repo público.
+# Respaldo local en D:\Desarrollo\dmc00-backups\linked-uploads-20261015.
+nodejs-legacy/uploads/
+
 # Clave RSA de dev del backend Spring - cada entorno genera/inyecta la suya
 **/rsa-keypair.ser
 
