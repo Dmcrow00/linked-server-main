@@ -21,14 +21,6 @@
 
     <properties>
         <github.repo>linked-server-main</github.repo>
-
-        <!-- TODO: sacar estas tres cuando el PR "FIX - Build: Jackson y Tomcat sin vulnerabilidades conocidas"
-             de dmc00-parent esté en develop: el arreglo va en el padre. Spring Boot 4.1.1 trae Jackson 2.21.5,
-             Jackson 3.1.5 y Tomcat 11.0.24, con vulnerabilidades altas y críticas (controles de seguridad del
-             2026-10-16). -->
-        <jackson-2-bom.version>2.21.7</jackson-2-bom.version>
-        <jackson-bom.version>3.1.7</jackson-bom.version>
-        <tomcat.version>11.0.27</tomcat.version>
     </properties>
 
     <dependencies>
