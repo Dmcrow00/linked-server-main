@@ -1,0 +1,21 @@
+# Gitleaks: reglas por defecto más excepciones revisadas a mano (el repo es público).
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Hallazgos revisados a mano"
+paths = [
+  # Clave de firma de JWT solo para los tests (no es la de ningún entorno).
+  '''spring-linked-project/src/test/resources/application-test\.yml''',
+]
+commits = [
+  # 2025-08-17: el backend Node traía en src/shared/Utils/Keys.ts la clave de sus JWT y la de cifrado.
+  # El archivo se borró después, pero siguen en el historial público: hay que rotarlas donde se usen
+  # (pendiente del dueño en dmc00-workspace/docs/plan/plan-de-migracion.md).
+  "3e92743da2bc28c8add3e5b79adab7cc2cdf8591",
+  "cd84cc3801a29bf302105a1724e5200c6ba3faeb",
+  # 2026-08-16: la migración a Spring traía en application.yml una clave de JWT de ejemplo para
+  # desarrollo ("DO NOT USE IN PRODUCTION") y la de los tests. Desde 2026-10-15 la de desarrollo
+  # sale de JWT_SECRET.
+  "538b42f4a7723678b0939ccbd84880eab8811e88",
+]
