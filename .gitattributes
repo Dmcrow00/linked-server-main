@@ -1,0 +1,3 @@
+# Scripts del wrapper de Maven: el de Linux con LF (si no, no corre) y el de Windows con CRLF.
+spring-linked-project/mvnw text eol=lf
+*.cmd text eol=crlf
