@@ -1,7 +1,0 @@
-src/
-tests/
-*.ts
-tsconfig.json
-tsconfig.build.json
-*.log
-.env

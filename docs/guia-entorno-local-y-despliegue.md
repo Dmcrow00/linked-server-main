@@ -78,8 +78,8 @@ La lista completa, con para qué es cada una, está en `spring-linked-project/.e
 
 Ver `dmc00-workspace/docs/convenciones/git-y-versionado.md` §6. Particularidades:
 
-- `main` todavía es la versión Node. La versión Spring se publica en `main` recién al retirar
-  `nodejs-legacy/` (pasos en [paridad-con-node.md](paridad-con-node.md)).
+- `main` todavía es la versión Node. La versión Spring se publica cuando el dueño lleve `develop` a `main`,
+  después de pasar la base de producción (pasos en [paridad-con-node.md](paridad-con-node.md), "Retiro").
 - El CI (`.github/workflows/ci.yml`) y los controles de seguridad (`seguridad.yml`) descargan
   `dmc00-parent` y `dmc00-core` de sus repos: mientras sean privados hace falta el secret
   `CROSS_REPO_PAT`. Hoy compilan contra `develop` de cada uno; pasar a un tag cuando exista.
