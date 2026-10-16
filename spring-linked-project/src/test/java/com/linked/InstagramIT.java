@@ -3,12 +3,14 @@ package com.linked;
 import com.linked.integration.InstagramApi.Publicacion;
 import com.linked.job.SincronizacionDeInstagram;
 import com.linked.repository.InstagramTokenRepository;
+import com.linked.soporte.DoblesDePrueba;
 import com.linked.soporte.InstagramApiFalsa;
 import com.linked.soporte.PruebaDeIntegracion;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -25,7 +27,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /** Vinculación con Instagram, importación de publicaciones y sincronización programada. */
 class InstagramIT extends PruebaDeIntegracion {
 
-    private static final LocalDateTime HOY = LocalDateTime.of(2026, 10, 15, 12, 0);
+    /** La hora del reloj fijo de los tests: los vencimientos se comparan contra ella. */
+    private static final LocalDateTime HOY = DoblesDePrueba.AHORA;
 
     @Autowired
     InstagramApiFalsa instagram;
@@ -36,6 +39,9 @@ class InstagramIT extends PruebaDeIntegracion {
     @Autowired
     SincronizacionDeInstagram sincronizacion;
 
+    @Autowired
+    TransactionTemplate transacciones;
+
     @Test
     void alVincularSeGuardaElTokenYElPerfilTomaElUsuarioYLaFotoDeInstagram() throws Exception {
         Long tatuador = crearUsuario("Tatuador");
@@ -44,7 +50,7 @@ class InstagramIT extends PruebaDeIntegracion {
 
         assertThat(tokens.findByTatuador_Id(tatuador)).hasValueSatisfying(guardado -> {
             assertThat(guardado.getAccessToken()).isEqualTo(token);
-            assertThat(guardado.getTokenExpiresAt()).isAfter(LocalDateTime.now().plusDays(59));
+            assertThat(guardado.getTokenExpiresAt()).isEqualTo(HOY.plusSeconds(InstagramApiFalsa.SESENTA_DIAS));
         });
         mvc.perform(get("/api/users/" + tatuador).header(HttpHeaders.AUTHORIZATION, sesionDe(tatuador)))
                 .andExpect(jsonPath("$.data.instagramHandle").value("tinta.fina"))
@@ -110,8 +116,8 @@ class InstagramIT extends PruebaDeIntegracion {
         vincularInstagram(vencido);
         Long porVencer = crearUsuario("Tatuador");
         String tokenPorVencer = vincularInstagram(porVencer);
-        cambiarVencimiento(vencido, LocalDateTime.now().minusHours(1));
-        cambiarVencimiento(porVencer, LocalDateTime.now().plusDays(5));
+        cambiarVencimiento(vencido, HOY.minusHours(1));
+        cambiarVencimiento(porVencer, HOY.plusDays(5));
         int renovacionesAntes = instagram.renovaciones();
 
         sincronizacion.sincronizarTodas();
@@ -120,7 +126,7 @@ class InstagramIT extends PruebaDeIntegracion {
         assertThat(instagram.renovaciones()).isGreaterThan(renovacionesAntes);
         assertThat(tokens.findByTatuador_Id(porVencer)).hasValueSatisfying(token -> {
             assertThat(token.getAccessToken()).isEqualTo(tokenPorVencer + "-renovado");
-            assertThat(token.getTokenExpiresAt()).isAfter(LocalDateTime.now().plusDays(59));
+            assertThat(token.getTokenExpiresAt()).isEqualTo(HOY.plusSeconds(InstagramApiFalsa.SESENTA_DIAS));
         });
     }
 
@@ -155,7 +161,12 @@ class InstagramIT extends PruebaDeIntegracion {
         mvc.perform(get("/api/trabajos/tatuador/" + tatuador)).andExpect(jsonPath("$.data.length()").value(1));
     }
 
+    /**
+     * Por el repositorio y no por SQL: así el valor pasa por la misma conversión de zona horaria
+     * ({@code hibernate.jdbc.time_zone}) con la que lo lee la app, en cualquier equipo.
+     */
     private void cambiarVencimiento(Long tatuador, LocalDateTime vencimiento) {
-        jdbc.update("UPDATE tat_instagram_token SET token_expires_at = ? WHERE id_tatuador = ?", vencimiento, tatuador);
+        transacciones.executeWithoutResult(estado ->
+                tokens.findByTatuador_Id(tatuador).orElseThrow().setTokenExpiresAt(vencimiento));
     }
 }
