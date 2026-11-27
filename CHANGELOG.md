@@ -27,6 +27,8 @@ Node, ya retirada, no tenía historial de versiones.
 
 ### Cambiado
 
+- `ArquitecturaTest` usa la regla común `ReglasDeArquitectura.ENDPOINTS_DECLARAN_PERMISO` de core-test (dmc00-core#4)
+  en lugar de su copia local; acepta además el `@PreAuthorize` puesto en la clase.
 - Las versiones de Jackson y Tomcat corregidas por CVE pasan a `dmc00-parent` (#3): el `pom.xml` ya no las fija.
   Las dependencias resueltas no cambian.
 - Java 25 y Spring Boot 4.1 sobre `dmc00-parent`. Respuestas, errores, JWT, RSA, contraseñas, CORS,

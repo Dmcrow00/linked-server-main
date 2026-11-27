@@ -5,10 +5,7 @@ import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.RequestMapping;
 
-import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
 /** Reglas de capas del workspace (backend-java.md §3 y §7) aplicadas a linked. */
@@ -24,13 +21,8 @@ class ArquitecturaTest {
     @ArchTest
     static final ArchRule inyeccion = ReglasDeArquitectura.SIN_INYECCION_POR_CAMPO;
 
-    /** Cada endpoint declara su permiso, aunque sea {@code permitAll()}. */
     @ArchTest
-    static final ArchRule todoEndpointDeclaraSuPermiso = methods()
-            .that().areDeclaredInClassesThat().resideInAPackage("..controller..")
-            .and().areMetaAnnotatedWith(RequestMapping.class)
-            .should().beAnnotatedWith(PreAuthorize.class)
-            .because("SecurityConfig solo separa lo público de lo autenticado; el rol lo decide cada endpoint");
+    static final ArchRule permisos = ReglasDeArquitectura.ENDPOINTS_DECLARAN_PERMISO;
 
     /** Los controllers dependen del contrato del servicio, no de su implementación. */
     @ArchTest

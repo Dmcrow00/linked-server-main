@@ -30,8 +30,8 @@ public class BusquedaServiceImpl implements BusquedaService {
 
     @Override
     public BusquedaDto.EstiloBusquedaResponse porEstilo(Double lat, Double lng, Double radioKm, boolean conSesion) {
-        // TODO: derivar los estilos de las imágenes con IA y quedarse con los tatuadores cuya
-        // especialidad coincida, ordenados por afinidad.
+        // La detección del estilo con IA está pendiente (docs/documentacion-tecnica.md, "Búsqueda"): mientras tanto
+        // no se infieren estilos y vuelven todos los tatuadores de la zona.
         double radio = radioKm != null ? radioKm : RADIO_KM_POR_DEFECTO;
         return new BusquedaDto.EstiloBusquedaResponse(List.of(), buscar(lat, lng, radio, conSesion));
     }
